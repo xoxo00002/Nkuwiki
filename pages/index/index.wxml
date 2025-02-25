@@ -1,0 +1,6 @@
+<!--index.wxml-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="container">
+    <text>首页</text>
+  </view>
+</scroll-view>
