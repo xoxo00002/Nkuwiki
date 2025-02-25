@@ -7,18 +7,23 @@
 
 ## 项目结构说明
 
+```
 project
+│
 ├── pages/ # 页面文件夹
 │ ├── index/ # 首页
 │ ├── search/ # 搜索页
 │ ├── discover/ # 发现页
 │ └── profile/ # 个人中心
+│
 ├── assets/ # 静态资源
 │ └── icons/ # 图标文件
+│
 ├── app.js # 小程序入口文件
 ├── app.json # 小程序全局配置
 ├── app.wxss # 全局样式
 └── project.config.json # 项目配置文件
+```
 
 
 ## 重要文件说明
