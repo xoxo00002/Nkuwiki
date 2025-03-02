@@ -3,5 +3,6 @@
   "projectname": "Nkuwiki",
   "setting": {
     "compileHotReLoad": true
-  }
+  },
+  "libVersion": "trial"
 }

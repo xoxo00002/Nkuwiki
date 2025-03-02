@@ -1,1 +1,115 @@
-/* pages/search/search.wxss */
+/* 通用样式 */
+page {
+  background-color: #f5f5f5;
+  font-size: 14px;
+}
+
+/* 顶部导航栏 */
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 20rpx;
+  background-color: #fff;
+  border-bottom: 1rpx solid #eee;
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  border-radius: 30rpx;
+  padding: 10rpx 20rpx;
+}
+
+.nav-icons {
+  display: flex;
+  gap: 20rpx;
+}
+
+/* 贡献提示 */
+.contribution-banner {
+  background-color: #ffeeba;
+  padding: 20rpx;
+  text-align: center;
+  margin: 20rpx;
+  border-radius: 10rpx;
+}
+
+/* 板块标题 */
+.section-title {
+  font-weight: bold;
+  margin: 20rpx;
+  display: block;
+}
+
+/* 为您推荐网格 */
+.recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15rpx;
+  padding: 0 20rpx;
+}
+
+.recommend-item {
+  background-color: #fff;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  text-align: center;
+}
+
+/* 热点新闻 */
+.news-item {
+  background-color: #fff;
+  padding: 20rpx;
+  margin: 10rpx 20rpx;
+  border-radius: 8rpx;
+}
+
+.news-tag {
+  color: #07c160;
+  display: block;
+  margin-top: 10rpx;
+}
+
+/* 校园热榜 */
+.hot-item {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  padding: 20rpx;
+  margin: 10rpx 20rpx;
+  border-radius: 8rpx;
+}
+
+.hot-rank {
+  color: #ff3b30;
+  margin-right: 20rpx;
+}
+
+.hot-count {
+  color: #888;
+  margin-left: auto;
+  margin-right: 20rpx;
+}
+
+.hot-tag {
+  color: #ff3b30;
+}
+
+/* 底部导航栏 */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  background-color: #fff;
+  padding: 20rpx 0;
+  border-top: 1rpx solid #eee;
+}
+
+.tab-item.active {
+  color: #07c160;
+}

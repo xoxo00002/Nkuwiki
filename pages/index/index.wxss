@@ -1,62 +1,106 @@
-/**index.wxss**/
-page {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-.scrollarea {
-  flex: 1;
-  overflow-y: hidden;
+/* index.wxss */
+.container {
+  padding: 20rpx;
+  background-color: #f5f5f5;
 }
 
-.userinfo {
+.post-card {
+  background: white;
+  border-radius: 16rpx;
+  margin-bottom: 30rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
+}
+
+.user-info {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  color: #aaa;
-  width: 80%;
-}
-
-.userinfo-avatar {
-  overflow: hidden;
-  width: 128rpx;
-  height: 128rpx;
-  margin: 20rpx;
-  border-radius: 50%;
-}
-
-.usermotto {
-  margin-top: 200px;
-}
-
-.avatar-wrapper {
-  padding: 0;
-  width: 56px !important;
-  border-radius: 8px;
-  margin-top: 40px;
-  margin-bottom: 40px;
+  margin-bottom: 30rpx;
 }
 
 .avatar {
-  display: block;
-  width: 56px;
-  height: 56px;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
 }
 
-.nickname-wrapper {
-  display: flex;
-  width: 100%;
-  padding: 16px;
-  box-sizing: border-box;
-  border-top: .5px solid rgba(0, 0, 0, 0.1);
-  border-bottom: .5px solid rgba(0, 0, 0, 0.1);
-  color: black;
-}
-
-.nickname-label {
-  width: 105px;
-}
-
-.nickname-input {
+.user-meta {
   flex: 1;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 32rpx;
+  margin-bottom: 8rpx;
+}
+
+.badge {
+  font-size: 24rpx;
+  color: #666;
+  background: #f0f0f0;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  display: inline-block;
+}
+
+.time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.post-content {
+  margin-bottom: 30rpx;
+}
+
+.post-title {
+  display: block;
+  font-weight: bold;
+  font-size: 36rpx;
+  margin-bottom: 20rpx;
+  color: #333;
+}
+
+.post-text {
+  font-size: 30rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+.tags {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.tag {
+  font-size: 24rpx;
+  color: #007AFF;
+  background: #e6f3ff;
+  padding: 8rpx 20rpx;
+  border-radius: 40rpx;
+}
+
+.tag.orange {
+  color: #FF6A00;
+  background: #fff0e6;
+}
+
+.interaction {
+  display: flex;
+  align-items: center;
+  gap: 40rpx;
+}
+
+.icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 12rpx;
+}
+
+.like, .comment {
+  display: flex;
+  align-items: center;
+  font-size: 28rpx;
+  color: #666;
 }

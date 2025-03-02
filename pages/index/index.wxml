@@ -1,6 +1,68 @@
-<!--index.wxml-->
-<scroll-view class="scrollarea" scroll-y type="list">
-  <view class="container">
-    <text>首页</text>
+<!-- index.wxml -->
+<view class="container">
+  <!-- 帖子1 - 新生提问 -->
+  <view class="post-card">
+    <view class="user-info">
+      <image class="avatar" src="/assets/icons/like.png" />
+      <view class="user-meta">
+        <view class="username">千堆雪</view>
+        <view class="badge">本科生</view>
+      </view>
+      <view class="time">10分钟前</view>
+    </view>
+
+    <view class="post-content">
+      <text class="post-title">【求助】计算机专业课程选择建议</text>
+      <text class="post-text">大家好！我是计算机系的新生，想请教一下学长学姐们关于专业课程的选择建议。特别是对算法和数据结构感兴趣，不知道大家有什么推荐的课程或学习路径吗？</text>
+    </view>
+
+    <view class="tags">
+      <text class="tag">#算法</text>
+      <text class="tag">#数据结构</text>
+    </view>
+
+    <view class="interaction">
+      <view class="like">
+        <image src="/assets/icons/like.png" class="icon" />
+        <text>18</text>
+      </view>
+      <view class="comment">
+        <image src="/assets/icons/comment.png" class="icon" />
+        <text>23</text>
+      </view>
+    </view>
   </view>
-</scroll-view>
+
+  <!-- 帖子2 - 活动预告 -->
+  <view class="post-card">
+    <view class="user-info">
+      <image class="avatar" src="/assets/icons/like.png" />
+      <view class="user-meta">
+        <view class="username">大列巴</view>
+        <view class="badge">硕士生</view>
+      </view>
+      <view class="time">24小时前</view>
+    </view>
+
+    <view class="post-content">
+      <text class="post-title">【活动预告】互联网创业经验分享会</text>
+      <text class="post-text">下周三下午3点在图书馆报告厅举办"互联网创业经验分享会"，特邀三位优秀校友分享他们的创业历程。感兴趣的同学欢迎报名参加！</text>
+    </view>
+
+    <view class="tags">
+      <text class="tag orange">#创业分享</text>
+      <text class="tag orange">#校友</text>
+    </view>
+
+    <view class="interaction">
+      <view class="like">
+        <image src="/assets/icons/like.png" class="icon" />
+        <text>45</text>
+      </view>
+      <view class="comment">
+        <image src="/assets/icons/comment.png" class="icon" />
+        <text>23</text>
+      </view>
+    </view>
+  </view>
+</view>

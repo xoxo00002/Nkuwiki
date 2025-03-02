@@ -1,3 +1,49 @@
+<!-- 页面结构 -->
 <view class="container">
-  <text>我的</text>
-</view> 
+  <!-- 顶部个人信息 -->
+  <view class="profile-header">
+    <image class="avatar" src="/images/avatar.png" />
+    <view class="profile-info">
+      <text class="nickname">北极熊</text>
+      <text class="university">南开大学</text>
+      <text class="status">卷又卷不动，躺又躺不平</text>
+    </view>
+    <view class="edit-btn">编辑资料</view>
+  </view>
+
+  <!-- 数据统计 -->
+  <view class="stats-container">
+    <view class="stat-item">
+      <text class="stat-number">238</text>
+      <text class="stat-label">帖子</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">1,459</text>
+      <text class="stat-label">获赞</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">328</text>
+      <text class="stat-label">关注</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">892</text>
+      <text class="stat-label">粉丝</text>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="menu-list">
+    <view class="menu-item">我的收藏</view>
+    <view class="menu-item">浏览历史</view>
+    <view class="menu-item">我的评论</view>
+    <view class="menu-item">我的点赞</view>
+    <view class="menu-item">草稿箱</view>
+    <view class="menu-item">意见反馈</view>
+    <view class="menu-item">消息通知</view>
+    <view class="menu-item">清除缓存</view>
+    <view class="menu-item">关于我们</view>
+    <view class="menu-item">退出登录</view>
+  </view>
+
+  
+</view>

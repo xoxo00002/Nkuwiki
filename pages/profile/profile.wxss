@@ -1,1 +1,115 @@
-/* pages/profile/profile.wxss */
+/* 样式表 */
+.container {
+  padding-bottom: 120rpx;
+  background-color: #f5f5f5;
+}
+
+/* 个人信息区域 */
+.profile-header {
+  display: flex;
+  padding: 40rpx;
+  background-color: #fff;
+  align-items: center;
+}
+
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  margin-right: 30rpx;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.nickname {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.university {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.status {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 10rpx;
+}
+
+.edit-btn {
+  padding: 10rpx 30rpx;
+  border: 1rpx solid #ccc;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+}
+
+/* 数据统计 */
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  padding: 40rpx 0;
+  margin: 20rpx 0;
+  background-color: #fff;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 菜单列表 */
+.menu-list {
+  background-color: #fff;
+  padding: 0 30rpx;
+}
+
+.menu-item {
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid #eee;
+  font-size: 28rpx;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+/* 底部导航 */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  display: flex;
+  background-color: #fff;
+  border-top: 1rpx solid #eee;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  line-height: 100rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.tab-item.active {
+  color: #007AFF;
+  font-weight: bold;
+}
