@@ -1,42 +1,55 @@
 <!-- 发现页面 -->
 <view class="discover-page">
-  <!-- 标题 -->
+  <!-- 标题栏 -->
   <view class="header">
     <text class="title">发现</text>
+    <view class="header-icons">
+      <image src="/assets/icons/discover/notification.png" class="icon"></image>
+      <image src="/assets/icons/discover/message.png" class="icon"></image>
+    </view>
   </view>
 
   <!-- 校园热点 -->
   <view class="section">
-    <text class="section-title">校园热点实时更新</text>
-    <scroll-view class="hot-list" scroll-x>
+    <view class="section-header">
+      <text class="section-title">校园热点</text>
+      <text class="update-text">实时更新</text>
+    </view>
+    <view class="hot-grid">
       <view class="hot-item">
-        <text class="hot-title">期末复习攻略分享</text>
-        <text class="hot-count">2.3k讨论</text>
+        <image src="/assets/icons/discover/library.png" mode="aspectFill"></image>
+        <view class="hot-info">
+          <text class="hot-title">期末复习攻略分享</text>
+          <text class="hot-count">2.3k 讨论</text>
+        </view>
       </view>
       <view class="hot-item">
-        <text class="hot-title">校园美食探店</text>
-        <text class="hot-count">1.8k讨论</text>
+        <image src="/assets/icons/discover/canteen.png" mode="aspectFill"></image>
+        <view class="hot-info">
+          <text class="hot-title">校园美食探店</text>
+          <text class="hot-count">1.8k 讨论</text>
+        </view>
       </view>
-    </scroll-view>
+    </view>
   </view>
 
   <!-- AI助手 -->
   <view class="section">
-    <view class="ai-header">
-      <text class="section-title">AI助手</text>
+    <view class="section-header">
+      <text class="section-title">AI 助手</text>
       <text class="more">查看更多</text>
     </view>
     <view class="ai-grid">
       <view class="ai-item">
-        <image src="/images/icon-homework.png" class="icon"></image>
+        <image src="/assets/icons/discover/robot.png" class="ai-icon"></image>
         <text>作业助手</text>
       </view>
       <view class="ai-item">
-        <image src="/images/icon-english.png" class="icon"></image>
+        <image src="/assets/icons/discover/translate.png" class="ai-icon"></image>
         <text>英语口语</text>
       </view>
       <view class="ai-item">
-        <image src="/images/icon-plan.png" class="icon"></image>
+        <image src="/assets/icons/discover/plan.png" class="ai-icon"></image>
         <text>保研规划</text>
       </view>
     </view>
@@ -44,29 +57,32 @@
 
   <!-- 校园活动 -->
   <view class="section">
-    <view class="activity-header">
+    <view class="section-header">
       <text class="section-title">校园活动</text>
       <text class="more">全部活动</text>
     </view>
-    <view class="activity-item">
+    <view class="activity-card">
+      <image src="/assets/icons/discover/music-festival.png" class="activity-image"></image>
       <text class="activity-title">校园音乐节</text>
-      <text class="activity-info">时间：2024-01-20 19:00</text>
-      <text class="activity-info">地点：大学生活动中心</text>
+      <text class="activity-time">时间：2024-01-20 19:00</text>
+      <text class="activity-location">地点：大学生活动中心</text>
     </view>
   </view>
 
   <!-- 学习资源 -->
   <view class="section">
-    <view class="resource-header">
+    <view class="section-header">
       <text class="section-title">学习资源</text>
       <text class="more">更多资源</text>
     </view>
-    <view class="resource-list">
+    <view class="resource-grid">
       <view class="resource-item">
+        <image src="/assets/icons/discover/book.png" class="resource-icon"></image>
         <text>考研资料</text>
         <text class="resource-count">12个精品资源</text>
       </view>
       <view class="resource-item">
+        <image src="/assets/icons/discover/code.png" class="resource-icon"></image>
         <text>编程课程</text>
         <text class="resource-count">8个在线课程</text>
       </view>

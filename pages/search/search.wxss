@@ -1,6 +1,6 @@
 /* 通用样式 */
 page {
-  background-color: #f5f5f5;
+  background-color: #fff;
   font-size: 14px;
 }
 
@@ -14,13 +14,36 @@ page {
   border-bottom: 1rpx solid #eee;
 }
 
+/* 搜索框样式 */
 .search-box {
-  flex: 1;
   display: flex;
   align-items: center;
-  background-color: #f0f0f0;
-  border-radius: 30rpx;
-  padding: 10rpx 20rpx;
+  margin: 20rpx;
+  padding: 15rpx 30rpx;
+  background: #f7f7f7;
+  border-radius: 40rpx;
+}
+
+.icon-search {
+  width: 40rpx;
+  height: 40rpx;
+  padding: 0 10rpx;
+  opacity: 0.5;
+}
+
+.icon-voice {
+  width: 30rpx;
+  height: 40rpx;
+  padding: 0 10rpx;
+  opacity: 0.5;
+}
+
+
+.search-box input {
+  flex: 1;
+  padding: 10rpx;
+  font-size: 28rpx;
+  color: #999;
 }
 
 .nav-icons {
@@ -28,74 +51,178 @@ page {
   gap: 20rpx;
 }
 
-/* 贡献提示 */
-.contribution-banner {
-  background-color: #ffeeba;
-  padding: 20rpx;
-  text-align: center;
-  margin: 20rpx;
-  border-radius: 10rpx;
-}
-
-/* 板块标题 */
-.section-title {
-  font-weight: bold;
-  margin: 20rpx;
-  display: block;
-}
-
-/* 为您推荐网格 */
-.recommend-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+/* 分类导航样式 */
+.category-nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 15rpx 20rpx;
   gap: 15rpx;
-  padding: 0 20rpx;
+}
+
+.category-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 15rpx;
+  background: #f8f9fe;
+  border-radius: 12rpx;
+}
+
+.category-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 8rpx;
+  opacity: 0.8;
+}
+
+.category-item text {
+  font-size: 24rpx;
+  color: #6687ff;
+  font-weight: 500;
+}
+
+/* 贡献提示样式 */
+.contribution-banner {
+  margin: 20rpx;
+  padding: 20rpx 30rpx;
+  background: #f8f9fe;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+}
+
+.contribution-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 15rpx;
+}
+
+/* 推荐区域样式 */
+.section {
+  margin: 40rpx 20rpx 20rpx;
+}
+
+.section-title {
+  font-size: 34rpx;
+  font-weight: 500;
+  margin-bottom: 25rpx;
+  color: #333;
+}
+
+.recommend-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
 }
 
 .recommend-item {
-  background-color: #fff;
+  flex: 1;
+  background: #f8f9fe;
   padding: 20rpx;
-  border-radius: 8rpx;
-  text-align: center;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: flex-start;
 }
 
-/* 热点新闻 */
-.news-item {
-  background-color: #fff;
-  padding: 20rpx;
-  margin: 10rpx 20rpx;
-  border-radius: 8rpx;
+.recommend-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 12rpx;
+  opacity: 0.7;
+}
+
+/* 为 group 图标单独设置样式 */
+.recommend-icon[src*="group"] {
+  width: 48rpx;  /* 稍微加宽 */
+  height: 40rpx;
+}
+
+.recommend-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.recommend-title {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+  line-height: 1.4;
+}
+
+.recommend-count {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 热点新闻样式 */
+.news-list .news-item {
+  margin-bottom: 25rpx;
+}
+
+.news-title {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.5;
 }
 
 .news-tag {
-  color: #07c160;
+  color: #6687ff;
+  font-size: 24rpx;
+  margin-top: 12rpx;
   display: block;
-  margin-top: 10rpx;
 }
 
-/* 校园热榜 */
-.hot-item {
+/* 热榜样式 */
+.hot-list .hot-item {
   display: flex;
   align-items: center;
-  background-color: #fff;
-  padding: 20rpx;
-  margin: 10rpx 20rpx;
-  border-radius: 8rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
 }
 
 .hot-rank {
-  color: #ff3b30;
-  margin-right: 20rpx;
+  width: 40rpx;
+  font-weight: bold;
+  color: #ff6b6b;
+  font-size: 32rpx;
+}
+
+.hot-title {
+  flex: 1;
+  margin: 0 20rpx;
+  font-size: 28rpx;
+  color: #333;
 }
 
 .hot-count {
-  color: #888;
-  margin-left: auto;
-  margin-right: 20rpx;
+  font-size: 24rpx;
+  color: #999;
 }
 
 .hot-tag {
-  color: #ff3b30;
+  color: #ff6b6b;
+  font-size: 24rpx;
+  margin-left: 15rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25rpx;
+}
+
+.view-more {
+  font-size: 26rpx;
+  color: #6687ff;
+}
+
+.refresh-icon {
+  width: 36rpx;
+  height: 36rpx;
+  opacity: 0.6;
 }
 
 /* 底部导航栏 */

@@ -16,6 +16,10 @@
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
   "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#4B6EFF",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/index/index",
@@ -41,6 +45,8 @@
         "iconPath": "assets/icons/profile.png",
         "selectedIconPath": "assets/icons/profile-active.png"
       }
-    ]
+    ],
+    "iconWidth": "16px",
+    "iconHeight": "16px"
   }
 }
