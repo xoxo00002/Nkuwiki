@@ -102,8 +102,8 @@
 }
 
 .ai-icon {
-  width: 80rpx;
-  height: 80rpx;
+  width: 45rpx;
+  height: 40rpx;
   margin-bottom: 16rpx;
 }
 
@@ -152,7 +152,7 @@
 }
 
 .resource-icon {
-  width: 60rpx;
+  width: 55rpx;
   height: 60rpx;
   flex-shrink: 0;
 }
