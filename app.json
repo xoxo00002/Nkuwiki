@@ -3,7 +3,9 @@
     "pages/index/index",
     "pages/search/search",
     "pages/discover/discover",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/profile/feedback/feedback",
+    "pages/profile/about/about"
   ],
   "window": {
     "backgroundTextStyle": "light",
