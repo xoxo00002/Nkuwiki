@@ -1,0 +1,78 @@
+<view class="post-container">
+  <view class="post-header">
+    <text class="header-title">发布帖子</text>
+  </view>
+
+  <view class="post-form">
+    <view class="form-item">
+      <input 
+        class="title-input" 
+        placeholder="请输入标题" 
+        maxlength="50"
+        bindinput="onTitleInput"
+        value="{{title}}"
+      />
+    </view>
+
+    <view class="form-item">
+      <textarea 
+        class="content-input" 
+        placeholder="分享你的想法..." 
+        bindinput="onContentInput"
+        value="{{content}}"
+        maxlength="4000"
+      />
+      <view class="word-count {{contentWarn ? 'warn' : ''}}">
+        {{content.length}}/4000
+        <text wx:if="{{contentWarn}}" class="warn-text">{{contentWarn}}</text>
+      </view>
+    </view>
+
+    <view class="image-uploader">
+      <view class="image-list">
+        <view 
+          class="image-item" 
+          wx:for="{{images}}" 
+          wx:key="*this"
+        >
+          <image 
+            src="{{item}}" 
+            mode="aspectFill"
+          />
+          <view 
+            class="delete-btn" 
+            catchtap="deleteImage" 
+            data-index="{{index}}"
+          >×</view>
+        </view>
+        
+        <view 
+          class="upload-btn" 
+          bindtap="chooseImage" 
+          wx:if="{{images.length < 9}}"
+        >
+          <text>+</text>
+          <text class="tip">{{images.length}}/9</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="visibility-selector">
+      <text class="section-title">可见性</text>
+      <radio-group bindchange="onVisibilityChange">
+        <label class="radio-item">
+          <radio value="public" checked="{{visibility === 'public'}}" />公开
+        </label>
+        <label class="radio-item">
+          <radio value="private" checked="{{visibility === 'private'}}" />仅自己可见
+        </label>
+      </radio-group>
+    </view>
+
+    <button 
+      class="submit-btn {{canSubmit ? 'submit-btn-active' : ''}}" 
+      disabled="{{false}}" 
+      bindtap="submitPost"
+    >发布</button>
+  </view>
+</view> 

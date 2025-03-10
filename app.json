@@ -1,17 +1,24 @@
 {
   "pages": [
+    "pages/login/login",
     "pages/index/index",
     "pages/search/search",
     "pages/discover/discover",
     "pages/profile/profile",
+    "pages/post/post",
+    "pages/profile/edit/edit",
+    "pages/post/detail/detail",
+    "pages/profile/myPosts/myPosts",
     "pages/profile/feedback/feedback",
     "pages/profile/about/about"
   ],
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#fff",
-    "navigationBarTitleText": "WeChat",
-    "navigationBarTextStyle": "black"
+    "navigationBarTitleText": "南开百科",
+    "navigationBarTextStyle": "black",
+    "initialRenderingCache": "static",
+    "enablePullDownRefresh": true
   },
   "style": "v2",
   "componentFramework": "glass-easel",
@@ -50,5 +57,11 @@
     ],
     "iconWidth": "16px",
     "iconHeight": "16px"
-  }
+  },
+  "usingComponents": {},
+  "requiredPrivateInfos": [
+    "chooseLocation",
+    "getLocation"
+  ],
+  "requiredBackgroundModes": []
 }

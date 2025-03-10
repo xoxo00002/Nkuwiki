@@ -14,3 +14,11 @@
   width: 48rpx;
   height: 48rpx;
 } 
+
+/* 添加全局控制以防止图标过大 */
+.action-icon, .icon {
+  max-width: 40rpx;
+  max-height: 40rpx;
+  width: auto;
+  height: auto;
+}
