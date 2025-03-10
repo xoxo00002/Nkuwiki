@@ -169,6 +169,7 @@ Page({
         const processedPost = {
           ...post,
           likes: post.likes || 0,
+          favoriteCounts: post.favoriteUsers.length || 0,
           comments: post.comments || [],
           commentCount: post.comments ? post.comments.length : 0,
           authorName: post.authorName || '用户',
@@ -769,6 +770,7 @@ Page({
     });
     this.submitComment();
   },
+
   // 添加收藏处理函数
   async handleFavorite(e) {
     const { id, index } = e.currentTarget.dataset
@@ -786,16 +788,19 @@ Page({
 
       // 立即更新UI状态
       const newIsFavorited = !currentPost.isFavorited
-      
+      const newFavouriteCounts = currentPost.favoriteCounts + (newIsFavorited ? 1 : -1);
+
       this.setData({
-        [`posts[${index}].isFavorited`]: newIsFavorited
-      })
+        [`posts[${index}].isFavorited`]: newIsFavorited,
+        [`posts[${index}].favoriteCounts`]: newFavouriteCounts
+      });
 
       // 调用云函数
       console.log('调用收藏云函数:', {
         postId: id,
-        当前收藏状态: currentPost.isFavorited
-      })
+        当前收藏状态: currentPost.isFavorited,
+        当前收藏数量: currentPost.favoriteCounts
+      });
       
       const res = await wx.cloud.callFunction({
         name: 'favorite',
@@ -809,13 +814,15 @@ Page({
       if (!res.result || !res.result.success) {
         // 如果失败，回滚UI状态
         this.setData({
-          [`posts[${index}].isFavorited`]: currentPost.isFavorited
+          [`posts[${index}].isFavorited`]: currentPost.isFavorited,
+          [`posts[${index}].favoriteCounts`]: currentPost.favoriteCounts
         })
         throw new Error(res.result?.message || '操作失败')
       }
 
       // 成功时将状态保存到本地
       const favoritePosts = wx.getStorageSync('favoritePosts') || {}
+
       if (newIsFavorited) {
         favoritePosts[id] = true
       } else {

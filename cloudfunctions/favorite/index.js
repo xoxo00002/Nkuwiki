@@ -8,7 +8,7 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
-// 切换收藏状态
+// 切换收藏状态 
 async function toggleFavorite(openid, postId) {
   console.log('处理收藏请求:', { openid, postId });
   

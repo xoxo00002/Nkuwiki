@@ -666,6 +666,10 @@
   color: #ffaa00; /* 收藏使用金黄色 */
 }
 
+.favorited-text {
+  color: #ffaa00;
+}
+
 /* 收藏动画效果 */
 @keyframes favorite {
   0% { transform: scale(1); }
