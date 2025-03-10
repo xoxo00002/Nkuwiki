@@ -88,9 +88,4 @@
       </view>
     </view>
   </view>
-
-  <!-- 添加发帖按钮 -->
-  <view class="post-btn" bindtap="goToPost">
-    <image src="/assets/icons/add.png"></image>
-  </view>
 </view>
