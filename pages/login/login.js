@@ -18,6 +18,7 @@ Page({
         icon: 'none'
       });
     }
+    wx.switchTab({ url: '/pages/index/index' });
   },
 
   onChooseAvatar(e) {

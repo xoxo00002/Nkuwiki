@@ -92,76 +92,80 @@ Page({
     })
   },
 
-    // 清除缓存
-    clearCache: function() {
-        // 添加确认弹窗
-        wx.showModal({
-            title: '确认清除缓存',
-            content: '确定要清除缓存吗？',
-            confirmText: '确定',
-            cancelText: '取消',
-            success: (res) => {
-                if (res.confirm) {
-                    // 用户点击确定，开始清除缓存
-                    wx.showLoading({
-                        title: '清理中...'
-                    });
+  onFunctionTap(e) {
+    console.log(e)
+  },
 
-                    // 获取所有缓存数据的键
-                    wx.getStorageInfo({
-                        success: (res) => {
-                            const size = res.currentSize;
-                            const keys = res.keys;
+  // 清除缓存
+  clearCache: function() {
+      // 添加确认弹窗
+      wx.showModal({
+          title: '确认清除缓存',
+          content: '确定要清除缓存吗？',
+          confirmText: '确定',
+          cancelText: '取消',
+          success: (res) => {
+              if (res.confirm) {
+                  // 用户点击确定，开始清除缓存
+                  wx.showLoading({
+                      title: '清理中...'
+                  });
 
-                            // 需要保留的键名列表
-                            const keepKeys = ['userInfo', 'token', 'important_settings'];
+                  // 获取所有缓存数据的键
+                  wx.getStorageInfo({
+                      success: (res) => {
+                          const size = res.currentSize;
+                          const keys = res.keys;
 
-                            // 过滤出需要删除的键
-                            const keysToDelete = keys.filter(key => !keepKeys.includes(key));
+                          // 需要保留的键名列表
+                          const keepKeys = ['userInfo', 'token', 'important_settings'];
 
-                            // 删除非保留数据
-                            Promise.all(keysToDelete.map(key => {
-                                return new Promise((resolve, reject) => {
-                                    wx.removeStorage({
-                                        key: key,
-                                        success: resolve,
-                                        fail: reject
-                                    });
-                                });
-                            }))
-                                .then(() => {
-                                    wx.hideLoading();
-                                    wx.showToast({
-                                        title: '清除成功',
-                                        icon: 'success',
-                                        duration: 2000
-                                    });
-                                })
-                                .catch((err) => {
-                                    wx.hideLoading();
-                                    wx.showToast({
-                                        title: '清除失败',
-                                        icon: 'error',
-                                        duration: 2000
-                                    });
-                                    console.error('清除缓存失败：', err);
-                                });
-                        },
-                        fail: (err) => {
-                            wx.hideLoading();
-                            wx.showToast({
-                                title: '获取缓存信息失败',
-                                icon: 'error',
-                                duration: 2000
-                            });
-                            console.error('获取缓存信息失败：', err);
-                        }
-                    });
-                }
-                // 用户点击取消则不执行任何操作
-            }
-        });
-    },
+                          // 过滤出需要删除的键
+                          const keysToDelete = keys.filter(key => !keepKeys.includes(key));
+
+                          // 删除非保留数据
+                          Promise.all(keysToDelete.map(key => {
+                              return new Promise((resolve, reject) => {
+                                  wx.removeStorage({
+                                      key: key,
+                                      success: resolve,
+                                      fail: reject
+                                  });
+                              });
+                          }))
+                              .then(() => {
+                                  wx.hideLoading();
+                                  wx.showToast({
+                                      title: '清除成功',
+                                      icon: 'success',
+                                      duration: 2000
+                                  });
+                              })
+                              .catch((err) => {
+                                  wx.hideLoading();
+                                  wx.showToast({
+                                      title: '清除失败',
+                                      icon: 'error',
+                                      duration: 2000
+                                  });
+                                  console.error('清除缓存失败：', err);
+                              });
+                      },
+                      fail: (err) => {
+                          wx.hideLoading();
+                          wx.showToast({
+                              title: '获取缓存信息失败',
+                              icon: 'error',
+                              duration: 2000
+                          });
+                          console.error('获取缓存信息失败：', err);
+                      }
+                  });
+              }
+              // 用户点击取消则不执行任何操作
+          }
+      });
+  },
 
   // 检查登录状态并获取最新用户信息
   async checkLogin() {
