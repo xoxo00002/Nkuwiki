@@ -847,5 +847,12 @@ Page({
       // 解除标志
       this.setData({ isFavoriting: false })
     }
+  },
+
+  //go to notification page
+  goToNotification() {
+    wx.navigateTo({
+      url: '/pages/notification/notification'
+    });
   }
 })

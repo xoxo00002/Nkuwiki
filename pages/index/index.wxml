@@ -4,7 +4,7 @@
   <!-- 顶部导航栏 -->
   <view class="header">
     <image class="logo" src="/assets/icons/index/logo.png" />
-    <image class="icon" src="/assets/icons/index/notification.png" />
+    <image class="icon" src="/assets/icons/index/notification.png" bindtap="goToNotification"/>
     <image class="icon" src="/assets/icons/index/message.png" />
   </view>
 

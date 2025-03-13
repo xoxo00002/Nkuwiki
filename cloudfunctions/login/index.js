@@ -37,6 +37,16 @@ exports.main = async (event, context) => {
         data: newUser
       })
 
+      const newUserNotification = {
+        _id: addResult._id,
+        isRead: true,
+        posts:[]
+      };
+
+      await db.collection("notification").add({
+        data: newUserNotification
+      });
+
       return {
         code: 0,
         data: {
