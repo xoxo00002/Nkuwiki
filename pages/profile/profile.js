@@ -1,7 +1,8 @@
 Page({
   data: {
     userInfo: null,
-    loginType: ''
+    loginType: '',
+    newLikes: 0  // 添加新的点赞数计数
   },
 
   onLoad() {
@@ -24,6 +25,9 @@ Page({
 
       // 获取最新的帖子数量
       this.getUserPostsCount()
+      
+      // 获取最新的获赞数量
+      this.getUserLikesCount()
     }
   },
 
@@ -61,6 +65,77 @@ Page({
       console.error('获取帖子数量失败：', err)
       wx.hideLoading()
     }
+  },
+
+  // 获取用户获赞数量
+  async getUserLikesCount() {
+    if (!this.data.userInfo) return
+
+    try {
+      console.log('开始获取用户获赞数量')
+      
+      const res = await wx.cloud.callFunction({
+        name: 'getUserLikes',
+        data: {
+          openid: this.data.userInfo._id || this.data.userInfo.openid
+        }
+      })
+
+      console.log('获取获赞数量结果:', res.result)
+
+      if (res.result && res.result.success) {
+        // 获取当前存储的获赞数量
+        const oldLikes = this.data.userInfo.likes || 0
+        // 获取新的获赞总数
+        const newTotalLikes = res.result.count
+
+        // 更新本地用户信息中的获赞数量
+        const userInfo = this.data.userInfo
+        userInfo.likes = newTotalLikes
+
+        // 计算新增获赞数量
+        const newLikes = Math.max(0, newTotalLikes - oldLikes)
+        
+        // 从缓存中获取上次已读的获赞数
+        const lastReadLikes = wx.getStorageSync('lastReadLikes') || oldLikes
+        
+        // 计算未读的获赞数
+        const unreadLikes = Math.max(0, newTotalLikes - lastReadLikes)
+
+        // 更新页面显示
+        this.setData({ 
+          userInfo,
+          newLikes: unreadLikes
+        })
+        
+        // 更新本地存储的用户信息
+        wx.setStorageSync('userInfo', userInfo)
+        console.log('更新后的获赞数量:', userInfo.likes, '新获赞数量:', unreadLikes)
+      }
+    } catch (err) {
+      console.error('获取获赞数量失败：', err)
+    }
+  },
+  
+  // 标记获赞已读
+  markLikesAsRead() {
+    if (this.data.newLikes > 0 && this.data.userInfo) {
+      // 将当前的获赞总数记录为已读
+      wx.setStorageSync('lastReadLikes', this.data.userInfo.likes)
+      this.setData({ newLikes: 0 })
+    }
+  },
+  
+  // 处理点击获赞项
+  onLikesTap() {
+    // 标记获赞为已读
+    this.markLikesAsRead()
+    
+    // 这里可以添加导航到详细获赞列表页面的逻辑
+    wx.showToast({
+      title: '功能开发中',
+      icon: 'none'
+    })
   },
 
   // 查看我的帖子

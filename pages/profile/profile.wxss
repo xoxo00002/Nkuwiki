@@ -104,6 +104,7 @@
 
 .stat-item {
   text-align: center;
+  position: relative;
   flex: 1;
 }
 
@@ -111,14 +112,31 @@
   font-size: 32rpx;
   font-weight: 500;
   display: block;
+  margin-bottom: 6rpx;
   color: #333;
 }
 
 .stat-label {
   font-size: 24rpx;
   color: #999;
-  margin-top: 4rpx;
-  display: block;
+}
+
+/* 添加徽章样式 */
+.badge {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 6rpx;
+  background-color: #FF4D4F;
+  color: white;
+  border-radius: 16rpx;
+  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
 }
 
 .function-row {
