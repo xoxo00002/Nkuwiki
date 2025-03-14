@@ -10,7 +10,7 @@ Page({
         this.loadNotification();
     },
 
-    async loadNotification(refresh = false){
+    async loadNotification(){
         try{
             let userId = "";
             try{

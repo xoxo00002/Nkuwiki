@@ -66,6 +66,7 @@ Page({
   },
   onLoad() {
     console.log('页面加载')
+    this.getIsRead();
     this.loadPosts()
     this.setData({
       currentPostId: '',  // 初始化为空字符串
@@ -88,7 +89,9 @@ Page({
 
     wx.cloud.database().collection("notification").doc(userId).get()
         .then(async res => {
-          this.data.isRead = res.data.isRead;
+          this.setData({
+            isRead: res.data.isRead
+          })
           console.log(this.data.isRead);
         })
         .catch(err => {

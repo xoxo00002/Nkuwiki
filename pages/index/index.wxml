@@ -4,8 +4,12 @@
   <!-- 顶部导航栏 -->
   <view class="header">
     <image class="logo" src="/assets/icons/index/logo.png" />
-    <image class="icon" wx:if = "{{isRead}}" src="/assets/icons/index/notification.png" bindtap="goToNotification"/>
-    <image class="icon" wx:else src="/assets/icons/index/notification-unread.png" bindtap="goToNotification"/>
+    <block wx:if = "{{isRead}}">
+    <image class="icon" src="/assets/icons/index/notification.png" bindtap="goToNotification"/>
+    </block>
+    <block wx:else>
+    <image class="icon" src="/assets/icons/index/notification-unread.png" bindtap="goToNotification"/>
+    </block>
     <image class="icon" src="/assets/icons/index/message.png" />
   </view>
 
