@@ -39,5 +39,6 @@
   "appid": "wx4af1d8244dee8b7e",
   "simulatorPluginLibVersion": {},
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
-  "cloudfunctionRoot": "cloudfunctions/"
+  "cloudfunctionRoot": "cloudfunctions/",
+  "projectname": "Nkuwiki"
 }

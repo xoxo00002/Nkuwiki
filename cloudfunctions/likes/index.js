@@ -62,7 +62,7 @@ async function toggleLike(openid, postId) {
               await db.collection("notification").doc(postQuery.data[0].authorId).update({
                 data: {
                   [`posts.${i}.likesUsers`]: hasLiked ? _.pop() : _.push(openid),
-                  isRead: false
+                  isRead: hasLiked
                 }
               });
             }

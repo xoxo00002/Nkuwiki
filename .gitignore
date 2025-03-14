@@ -1,2 +1,5 @@
 .cursorrules
 .vscode/
+.gitignore
+cloudfunctions/*/node_modules/
+.idea/

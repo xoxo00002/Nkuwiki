@@ -7,7 +7,6 @@ Page({
 
     onLoad() {
         console.log("加载notification")
-        const db = wx.cloud.database;
         this.loadNotification();
     },
 
@@ -23,6 +22,15 @@ Page({
             }catch(err){
                 console.log("获取用户id失败");
             }
+
+            wx.cloud.database().collection("notification").doc(userId).update({
+                data: {
+                    isRead: true
+                },
+                success: function (res){
+                    console.log(res.data);
+                }
+            });
         }catch(err){
             console.log("加载notification失败");
         }
