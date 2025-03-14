@@ -93,6 +93,20 @@ exports.main = async (event, context) => {
 
     console.log('创建帖子结果：', result)
 
+    //更新notification的posts
+    let data = {
+      postId: result._id,
+      likesUsers: [],
+      favouriteUsers: [],
+      comments: []
+    };
+
+    db.collection("notification").doc(authorId).update({
+      data:{
+        posts: _.push(data)
+      }
+    });
+
     return {
       code: 0,
       data: result._id,

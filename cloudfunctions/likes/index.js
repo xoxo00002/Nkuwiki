@@ -45,7 +45,7 @@ async function toggleLike(openid, postId) {
       likedUsersCount: likedUsers.length
     });
 
-    // 更新点赞状态
+    // 更新posts点赞状态
     await db.collection('posts').doc(postId).update({
       data: {
         likes: hasLiked ? _.inc(-1) : _.inc(1),
@@ -53,6 +53,25 @@ async function toggleLike(openid, postId) {
         updateTime: db.serverDate()
       }
     });
+
+    //更新notification.posts的点赞人openid
+    db.collection("notification").doc(postQuery.data[0].authorId).get()
+        .then(async res => {
+          for(let i = 0; i<res.data.posts.length; i++) {
+            if(res.data.posts[i].postId === postId) {
+              await db.collection("notification").doc(postQuery.data[0].authorId).update({
+                data: {
+                  [`posts.${i}.likesUsers`]: hasLiked ? _.pop() : _.push(openid),
+                  isRead: false
+                }
+              });
+            }
+          }
+
+        })
+        .catch(err => {
+          console.log("更新点赞人员openid失败")
+        });
 
     return {
       success: true,

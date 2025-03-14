@@ -37,6 +37,7 @@ exports.main = async (event, context) => {
         data: newUser
       })
 
+      //build up a new database to store notification
       const newUserNotification = {
         _id: addResult._id,
         isRead: true,
@@ -46,6 +47,7 @@ exports.main = async (event, context) => {
       await db.collection("notification").add({
         data: newUserNotification
       });
+
 
       return {
         code: 0,
