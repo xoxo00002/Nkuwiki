@@ -42,10 +42,9 @@
         <text class="stat-num">{{userInfo.posts || 0}}</text>
         <text class="stat-label">帖子</text>
       </view>
-      <view class="stat-item" bindtap="onLikesTap">
-        <text class="stat-num">{{userInfo.likes || 0}}</text>
+      <view class="stat-item">
+        <text class="stat-num">{{totalLikes || 0}}</text>
         <text class="stat-label">获赞</text>
-        <view class="badge" wx:if="{{newLikes > 0}}">{{newLikes > 99 ? '99+' : newLikes}}</view>
       </view>
       <view class="stat-item">
         <text class="stat-num">{{userInfo.following || 0}}</text>

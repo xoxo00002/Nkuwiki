@@ -2,7 +2,7 @@ Page({
   data: {
     userInfo: null,
     loginType: '',
-    newLikes: 0  // 添加新的点赞数计数
+    totalLikes: 0  // 添加获赞总数字段
   },
 
   onLoad() {
@@ -11,6 +11,11 @@ Page({
       userInfo,
       loginType: userInfo?.loginType || ''
     })
+    
+    // 如果用户已登录，获取获赞总数
+    if (userInfo) {
+      this.getUserTotalLikes()
+    }
   },
 
   onShow() {
@@ -26,8 +31,8 @@ Page({
       // 获取最新的帖子数量
       this.getUserPostsCount()
       
-      // 获取最新的获赞数量
-      this.getUserLikesCount()
+      // 获取最新的获赞总数
+      this.getUserTotalLikes()
     }
   },
 
@@ -67,75 +72,41 @@ Page({
     }
   },
 
-  // 获取用户获赞数量
-  async getUserLikesCount() {
+  // 获取用户获赞总数
+  async getUserTotalLikes() {
     if (!this.data.userInfo) return
 
     try {
-      console.log('开始获取用户获赞数量')
-      
+      console.log('开始获取用户获赞总数')
+      wx.showLoading({ title: '加载中...' })
+
       const res = await wx.cloud.callFunction({
-        name: 'getUserLikes',
+        name: 'getUserPosts',
         data: {
-          openid: this.data.userInfo._id || this.data.userInfo.openid
+          openid: this.data.userInfo._id || this.data.userInfo.openid,
+          includePostData: true  // 请求包含帖子数据
         }
       })
 
-      console.log('获取获赞数量结果:', res.result)
+      console.log('获取用户帖子结果:', res.result)
 
-      if (res.result && res.result.success) {
-        // 获取当前存储的获赞数量
-        const oldLikes = this.data.userInfo.likes || 0
-        // 获取新的获赞总数
-        const newTotalLikes = res.result.count
-
-        // 更新本地用户信息中的获赞数量
-        const userInfo = this.data.userInfo
-        userInfo.likes = newTotalLikes
-
-        // 计算新增获赞数量
-        const newLikes = Math.max(0, newTotalLikes - oldLikes)
-        
-        // 从缓存中获取上次已读的获赞数
-        const lastReadLikes = wx.getStorageSync('lastReadLikes') || oldLikes
-        
-        // 计算未读的获赞数
-        const unreadLikes = Math.max(0, newTotalLikes - lastReadLikes)
+      if (res.result && res.result.success && res.result.posts) {
+        // 计算所有帖子的点赞总数
+        let totalLikes = 0
+        res.result.posts.forEach(post => {
+          totalLikes += (post.likes || 0)
+        })
 
         // 更新页面显示
-        this.setData({ 
-          userInfo,
-          newLikes: unreadLikes
-        })
-        
-        // 更新本地存储的用户信息
-        wx.setStorageSync('userInfo', userInfo)
-        console.log('更新后的获赞数量:', userInfo.likes, '新获赞数量:', unreadLikes)
+        this.setData({ totalLikes })
+        console.log('用户获赞总数:', totalLikes)
       }
+
+      wx.hideLoading()
     } catch (err) {
-      console.error('获取获赞数量失败：', err)
+      console.error('获取获赞总数失败：', err)
+      wx.hideLoading()
     }
-  },
-  
-  // 标记获赞已读
-  markLikesAsRead() {
-    if (this.data.newLikes > 0 && this.data.userInfo) {
-      // 将当前的获赞总数记录为已读
-      wx.setStorageSync('lastReadLikes', this.data.userInfo.likes)
-      this.setData({ newLikes: 0 })
-    }
-  },
-  
-  // 处理点击获赞项
-  onLikesTap() {
-    // 标记获赞为已读
-    this.markLikesAsRead()
-    
-    // 这里可以添加导航到详细获赞列表页面的逻辑
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
-    })
   },
 
   // 查看我的帖子
