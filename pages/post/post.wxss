@@ -1,36 +1,24 @@
 .post-container {
+  background: #f8f8f8;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 80vh;
-  background: #f8f8f8;
-  padding-top: 140rpx; 
-  box-sizing: border-box;
 }
 
-.post-content-scroll {
-  flex: 1;
-  overflow: auto;
-  padding-bottom: 120rpx;
-}
-
-
+/* 顶部导航栏 */
 .post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20rpx 24rpx 16rpx;
+  padding: 0 24rpx;
   background: #fff;
-  height: auto; 
-  min-height: 60rpx;
+  height: 88rpx;
   border-bottom: 1rpx solid #f0f0f0;
-  position: sticky; 
-  top: 0;
-  z-index: 90;
 }
 
 .back-icon {
   width: 88rpx;
-  height: 78rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,17 +30,18 @@
 }
 
 .header-title {
-  font-size: 42rpx;
+  font-size: 34rpx;
   font-weight: 500;
   color: #333;
   flex: 1;
   text-align: center;
 }
 
-.publish-btn {
+.publish-button {
   background: #6252ee;
+  color: #fff;
   font-size: 30rpx;
-  padding: 0 16rpx;  
+  padding: 0 26rpx;  
   border-radius: 8rpx;
   line-height: 60rpx;
   height: 60rpx;
@@ -60,18 +49,16 @@
   max-width: 120rpx; 
   margin-left: auto; 
   font-weight: normal;
-  text-align: center;
-  color: #fff;
+  text-align:center;
   
 }
 
 /* 表单区域 */
 .post-form {
-  padding: 24rpx;
-  padding-bottom: 120rpx; 
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 24rpx;
   gap: 24rpx;
 }
 
@@ -104,12 +91,10 @@
   background: #fff;
   border-radius: 12rpx;
   box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.03);
-  position: relative;
-  z-index: 5;
 }
 
 .toolbar-item {
-  margin-right: 50rpx;
+  margin-right: 40rpx;
   color: #666;
   font-size: 30rpx;
   font-weight: 500;
@@ -197,7 +182,7 @@
   padding: 24rpx;
   border-radius: 12rpx;
   box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.03);
-  margin-bottom: 120rpx; 
+  animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
@@ -348,426 +333,4 @@
 .wiki-switch switch {
   transform: scale(0.7);
   margin-left: 8rpx;
-}
-
-/* 完全重新设计的图片选择与预览 */
-.image-upload-section {
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 24rpx;
-  margin-top: 24rpx;
-}
-
-.image-upload-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
-}
-
-.image-upload-title {
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #333;
-}
-
-.image-count {
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 8rpx;
-  text-align: right;
-}
-
-.image-count-highlight {
-  color: #6252ee;
-  font-weight: 500;
-}
-
-/* 图片网格布局 */
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20rpx;
-}
-
-.image-item {
-  position: relative;
-  width: 100%;
-  padding-bottom: 100%; /* 宽高比1:1 */
-  border-radius: 12rpx;
-  overflow: hidden;
-}
-
-.image-item image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.add-image-btn {
-  position: relative;
-  width: 100%;
-  padding-bottom: 100%;
-  background: #f5f5f5;
-  border-radius: 12rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.add-image-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 50rpx;
-  height: 50rpx;
-  color: #999;
-  font-size: 50rpx;
-  line-height: 1;
-}
-
-.delete-btn {
-  position: absolute;
-  top: 10rpx;
-  right: 10rpx;
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24rpx;
-  z-index: 10;
-}
-
-/* 全屏图片预览 */
-.image-preview-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.preview-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 60rpx 30rpx 20rpx;
-  color: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(0,0,0,0.5);
-}
-
-.preview-title {
-  font-size: 30rpx;
-}
-
-.preview-close {
-  width: 40rpx;
-  height: 40rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-}
-
-.preview-image {
-  width: 90%;
-  max-height: 60vh;
-  border-radius: 12rpx;
-  background: #fff;
-}
-
-.preview-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 30rpx;
-  background: rgba(0,0,0,0.5);
-}
-
-.preview-thumbnails {
-  display: flex;
-  overflow-x: auto;
-  margin-top: 20rpx;
-  padding: 10rpx;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 12rpx;
-  width: 90%;
-}
-
-.preview-thumbnail {
-  width: 100rpx;
-  height: 100rpx;
-  margin: 0 10rpx;
-  border-radius: 6rpx;
-  border: 2rpx solid transparent;
-}
-
-.preview-thumbnail.active {
-  border-color: #6252ee;
-}
-
-.preview-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 30rpx;
-  gap: 40rpx;
-}
-
-.preview-button {
-  padding: 12rpx 30rpx;
-  border-radius: 40rpx;
-  font-size: 28rpx;
-  color: #fff;
-}
-
-.confirm-btn {
-  background: #6252ee;
-}
-
-.cancel-btn {
-  background: #666;
-}
-
-/* 图片上传容器优化 */
-.image-upload-container {
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 24rpx;
-  margin: 20rpx 0;
-  box-shadow: 0 4rpx 10rpx rgba(0,0,0,0.05);
-  position: relative;
-  border: 1rpx solid #eaeaea;
-}
-
-.upload-title {
-  position: absolute;
-  top: -14rpx;
-  left: 24rpx;
-  background: #6252ee;
-  color: #fff;
-  font-size: 24rpx;
-  padding: 4rpx 16rpx;
-  border-radius: 8rpx;
-  z-index: 2;
-}
-
-/* 图片网格布局 */
-.upload-image-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16rpx;
-  margin-top: 20rpx;
-}
-
-.upload-image-item {
-  position: relative;
-  padding-bottom: 100%; /* 保持1:1比例 */
-  border-radius: 8rpx;
-  overflow: hidden;
-  background: #f5f5f5;
-  border: 1rpx solid #eaeaea;
-}
-
-.upload-image-item image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.delete-image-btn {
-  position: absolute;
-  top: 6rpx;
-  right: 6rpx;
-  width: 36rpx;
-  height: 36rpx;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24rpx;
-  z-index: 10;
-}
-
-/* 添加图片按钮 */
-.add-button {
-  border: 2rpx dashed #6252ee;
-  background: #f0eeff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.add-icon {
-  position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 48rpx;
-  color: #6252ee;
-}
-
-.add-text {
-  position: absolute;
-  top: 65%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24rpx;
-  color: #6252ee;
-}
-
-/* 图片状态栏 */
-.image-status-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16rpx;
-  padding-top: 12rpx;
-  border-top: 1rpx solid #f0f0f0;
-}
-
-.image-count {
-  font-size: 24rpx;
-  color: #666;
-}
-
-.edit-all-btn {
-  font-size: 24rpx;
-  color: #6252ee;
-  background: rgba(98, 82, 238, 0.1);
-  padding: 6rpx 16rpx;
-  border-radius: 20rpx;
-}
-
-/* 图片预览弹窗优化 */
-.image-preview-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  padding: 120rpx;
-  margin-top: 150rpx; 
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #fff;
-  margin-bottom: 40rpx;
-}
-
-.preview-title {
-  font-size: 42rpx;
-  font-weight: 500;
- 
-  
-}
-
-.preview-close {
-  font-size: 52rpx;
-  width: 60rpx;
-  height: 60rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
- 
-}
-
-.preview-swiper {
-  flex: 1;
-  width: 100%;
-  margin-top: 60rpx;
-}
-
-.preview-image {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.preview-indicator {
-  text-align: center;
-  color: #fff;
-  font-size: 28rpx;
-  margin: 16rpx 0;
-}
-
-.thumbnail-scroll {
-  white-space: nowrap;
-  width: 100%;
-}
-
-.preview-thumbnails {
-  margin: 16rpx 0;
-  width: 100%;
-}
-
-.preview-thumbnail {
-  display: inline-block;
-  width: 100rpx;
-  height: 100rpx;
-  margin: 0 8rpx;
-  border-radius: 6rpx;
-  border: 2rpx solid transparent;
-}
-
-.preview-thumbnail.active {
-  border-color: #6252ee;
-}
-
-.preview-actions {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 40rpx;
-  margin-top: 20rpx;
-}
-
-.preview-button {
-  padding: 16rpx 0;
-  border-radius: 40rpx;
-  font-size: 30rpx;
-  color: #fff;
-  text-align: center;
-  width: 45%;
-}
-
-.crop-btn {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 20rpx 30rpx;
-}
-
-.confirm-btn {
-  background: #6252ee;
-  padding: 20rpx 30rpx;
-}
+} 
