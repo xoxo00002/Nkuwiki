@@ -9,7 +9,7 @@
   </view>
 
   <!-- 未登录状态 -->
-  <view class="user-card" wx:if="{{userInfo}}">
+  <view class="user-card" wx:if="{{!userInfo}}">
     <view class="user-info">
       <view class="avatar-container">
         <image class="avatar" src="/assets/icons/default-avatar.png" />
