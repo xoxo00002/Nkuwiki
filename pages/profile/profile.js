@@ -140,6 +140,33 @@ Page({
 
   onFunctionTap(e) {
     console.log(e)
+
+    console.log('触发了onFunctionTap函数')
+    const type = e.currentTarget.dataset.type
+
+    if (!this.data.userInfo) {
+      console.log('用户未登录，无法查看帖子')
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      return
+    }
+
+    console.log('准备跳转到我的帖子页面')
+    wx.navigateTo({
+      url: `/pages/profile/mylike_fav_comment/mylike_fav_comment?type=${type}`,
+      success: () => {
+        console.log('跳转到我的帖子页面成功')
+      },
+      fail: (err) => {
+        console.error('跳转到我的帖子页面失败:', err)
+        wx.showToast({
+          title: '页面跳转失败',
+          icon: 'none'
+        })
+      }
+    })
   },
 
   // 清除缓存

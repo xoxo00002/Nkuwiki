@@ -1,10 +1,6 @@
 {
   "compileType": "miniprogram",
   "libVersion": "trial",
-  "packOptions": {
-    "ignore": [],
-    "include": []
-  },
   "setting": {
     "coverView": true,
     "es6": true,
@@ -29,15 +25,20 @@
     "useCompilerPlugins": false,
     "condition": false,
     "swc": false,
-    "disableSWC": true
+    "disableSWC": true,
+    "ignoreUploadUnusedFiles": true
   },
   "condition": {},
   "editorSetting": {
     "tabIndent": "auto",
     "tabSize": 2
   },
-  "appid": "wx5f570dde32fb81fd",
   "simulatorPluginLibVersion": {},
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
-  "cloudfunctionRoot": "cloudfunctions/"
+  "cloudfunctionRoot": "cloudfunctions/",
+  "appid": "wx5f570dde32fb81fd",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  }
 }
