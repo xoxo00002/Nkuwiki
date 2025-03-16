@@ -10,7 +10,8 @@
     "pages/post/detail/detail",
     "pages/profile/myPosts/myPosts",
     "pages/profile/feedback/feedback",
-    "pages/profile/about/about"
+    "pages/profile/about/about",
+    "pages/profile/mylike_fav_comment/mylike_fav_comment"
   ],
   "window": {
     "backgroundTextStyle": "light",
