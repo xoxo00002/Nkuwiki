@@ -6,11 +6,13 @@ Page({
     pageSize: 10,
     loading: false,
     hasMore: true,
+    mytype: null,
     mytitle: null
   },
 
   onLoad(options) {
     console.log('mylike_fav_comment页面onLoad触发')
+    this.data.mytype = options.type
     switch (options.type) {
       case 'star' :
         this.setData({ mytitle: '收藏' })
@@ -88,7 +90,7 @@ Page({
   // 下拉刷新
   onPullDownRefresh() {
     this.setData({ page: 1 })
-    this.loadPosts(options.type, true)
+    this.loadPosts(this.data.mytype, true)
       .then(() => {
         wx.stopPullDownRefresh()
       })
