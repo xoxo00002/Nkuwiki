@@ -49,7 +49,7 @@ Page({
           pageSize: this.data.pageSize,
           // 传入用户ID以确保查询正确
           openid: userInfo._id || userInfo.openid,
-          type:like_fav_comment
+          type : like_fav_comment
         }
       })
       
@@ -99,7 +99,7 @@ Page({
   // 上拉加载更多
   onReachBottom() {
     if (this.data.hasMore) {
-      this.loadPosts(options.type)
+      this.loadPosts(this.data.mytype)
     }
   },
   

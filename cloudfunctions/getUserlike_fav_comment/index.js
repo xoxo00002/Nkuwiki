@@ -10,7 +10,11 @@ const _ = db.command
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
 
-  const openid = event.openid || wxContext.OPENID
+  // const openid = event.openid ||  wxContext.OPENID
+  // // 点赞无法记录用户id，只能记录openid
+  const openid = wxContext.OPENID
+  const like_fav_comment = event.type
+  console.log('like_fav_comment : ', like_fav_comment)
   
   console.log('调用getUserlike_fav_comment云函数:', {
     用户openid: openid,
@@ -27,13 +31,15 @@ exports.main = async (event, context) => {
     
     console.log('用户查询结果:', userResult)
     
-    if (userResult.data && userResult.data.length > 0) {
-      // 使用 _id 作为 authorId
-      authorId = userResult.data[0]._id || openid
-      console.log('找到用户ID:', authorId)
-    } else {
-      console.log('未找到用户，尝试使用openid作为authorId')
-    }
+    // if (userResult.data && userResult.data.length > 0) {
+    //   // 使用 _id 作为 authorId
+    //   authorId = userResult.data[0]._id || openid
+    //   console.log('找到用户ID:', authorId)
+    // } else {
+    //   console.log('未找到用户，尝试使用openid作为authorId')
+    // }
+    authorId = openid
+    // 点赞无法记录用户id，只能记录openid
   } catch (err) {
     console.error('查询用户信息失败:', err)
   }
@@ -60,8 +66,9 @@ exports.main = async (event, context) => {
       每页数量: pageSize
     })
 
-    if (event.like_fav_comment === 'like'){
-      const postsResult = await db.collection('posts')
+    let postsResult = null
+    if (event.type === 'like'){
+      postsResult = await db.collection('posts')
       .where({
         likedUsers: authorId
       })
@@ -70,8 +77,8 @@ exports.main = async (event, context) => {
       .limit(pageSize)
       .get()
     }
-    if (event.like_fav_comment === 'favorite'){
-      const postsResult = await db.collection('posts')
+    if (event.type === 'star'){
+      postsResult = await db.collection('posts')
       .where({
         favoriteUsers: authorId
       })
@@ -80,8 +87,8 @@ exports.main = async (event, context) => {
       .limit(pageSize)
       .get()
     }
-    if (event.like_fav_comment === 'comment'){
-      const postsResult = await db.collection('posts')
+    if (event.type === 'comment'){
+      postsResult = await db.collection('posts')
       .where({
         'comments.authorId': authorId
       })
@@ -90,9 +97,7 @@ exports.main = async (event, context) => {
       .limit(pageSize)
       .get()
     }
-    
-    console.log('查询结果:', postsResult)
-    
+
     return {
       success: true,
       posts: postsResult.data,
