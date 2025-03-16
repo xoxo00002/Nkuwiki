@@ -15,8 +15,8 @@ exports.main = async (event, context) => {
     images, 
     title, 
     isPublic, 
-    authorId, 
-    authorName, 
+    authorId,
+    authorName,
     authorAvatar, 
     loginType,
     OPENID: cloud.getWXContext().OPENID
@@ -48,6 +48,7 @@ exports.main = async (event, context) => {
     const authorName = userInfo.nickName || '匿名用户'
     const authorAvatar = userInfo.avatarUrl || '/assets/icons/default-avatar.png'
     const loginType = userInfo.loginType || 'wechat'
+    const authorOpenId = OPENID;
 
     // 打印接收到的数据
     console.log('接收到的数据：', {
@@ -72,6 +73,7 @@ exports.main = async (event, context) => {
         content,
         images,
         authorId,
+        authorOpenId,
         authorName,
         authorAvatar,
         loginType,  // 存储登录类型
@@ -101,7 +103,7 @@ exports.main = async (event, context) => {
       comments: []
     };
 
-    db.collection("notification").doc(authorId).update({
+    db.collection("notification").doc(OPENID).update({
       data:{
         posts: _.push(data)
       }

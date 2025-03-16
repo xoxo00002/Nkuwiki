@@ -75,13 +75,14 @@ Page({
   },
 
   async getIsRead(){
-    let userId = "";
 
     try{
-      const wxContext = await wx.cloud.callFunction({
-        name: "login"
+      const res = await wx.cloud.callFunction({
+        name: "getOpenID"
       });
-      userId = wxContext.result._id || wxContext.result.data?._id || "";
+
+      var userId = res.result.openid;
+
       console.log("获取用户id", userId);
     }catch(err){
       console.log("获取用户id失败");

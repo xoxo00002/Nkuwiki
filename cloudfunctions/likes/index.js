@@ -1,5 +1,6 @@
 // 优化点赞云函数
 const cloud = require('wx-server-sdk')
+const {getWXContext} = require("wx-server-sdk");
 
 cloud.init({
   env: 'nkuwiki-0g6bkdy9e8455d93'
@@ -55,11 +56,11 @@ async function toggleLike(openid, postId) {
     });
 
     //更新notification.posts的点赞人openid
-    db.collection("notification").doc(postQuery.data[0].authorId).get()
+    db.collection("notification").doc(postQuery.data[0].authorOpenId).get()
         .then(async res => {
           for(let i = 0; i<res.data.posts.length; i++) {
-            if(res.data.posts[i].postId === postId) {
-              await db.collection("notification").doc(postQuery.data[0].authorId).update({
+            if(res.data.posts[i].postId === postId && res.data._id!==cloud.getWXContext().OPENID) {
+              await db.collection("notification").doc(postQuery.data[0].authorOpenId).update({
                 data: {
                   [`posts.${i}.likesUsers`]: hasLiked ? _.pop() : _.push(openid),
                   isRead: hasLiked

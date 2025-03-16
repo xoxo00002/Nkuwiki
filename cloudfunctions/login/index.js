@@ -39,7 +39,7 @@ exports.main = async (event, context) => {
 
       //build up a new database to store notification
       const newUserNotification = {
-        _id: addResult._id,
+        _id: cloud.getWXContext().OPENID,
         isRead: true,
         posts:[]
       };
