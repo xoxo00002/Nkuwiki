@@ -16,7 +16,8 @@ Page({
       maxWidth: 1080, // 最大宽度
       maxHeight: 1080, // 最大高度
       quality: 0.8 // 压缩质量
-    }
+    },
+    isEditingMode: false
   },
 
   // 监听标题输入
@@ -105,7 +106,8 @@ Page({
         that.setData({
           previewImages: tempPaths,
           showImagePreview: true,
-          currentPreviewIndex: 0
+          currentPreviewIndex: 0,
+          isEditingMode: false  
         });
       }
     });
@@ -156,14 +158,26 @@ Page({
 
   // 确认预览的图片
   confirmPreview: function() {
-    const currentImages = this.data.images || [];
-    const newImages = [...currentImages, ...this.data.previewImages];
-    
-    this.setData({
-      images: newImages,
-      showImagePreview: false,
-      previewImages: []
-    });
+    if (this.data.isEditingMode) {
+      // 直接用预览图片替换原有图片
+      this.setData({
+        images: [...this.data.previewImages],
+        showImagePreview: false,
+        previewImages: [],
+        isEditingMode: false
+      });
+    } else {
+      // 将预览图片添加到现有图片
+      const currentImages = this.data.images || [];
+      const newImages = [...currentImages, ...this.data.previewImages];
+      
+      this.setData({
+        images: newImages,
+        showImagePreview: false,
+        previewImages: [],
+        isEditingMode: false
+      });
+    }
   },
 
   // 批量编辑图片
@@ -172,7 +186,8 @@ Page({
     this.setData({
       previewImages: [...this.data.images],
       showImagePreview: true,
-      currentPreviewIndex: 0
+      currentPreviewIndex: 0,
+      isEditingMode: true  // 标记为编辑
     });
   },
 
@@ -336,7 +351,8 @@ Page({
       isPublic: true,
       allowComment: true,
       wikiKnowledge: false,
-      currentStyle: 'formal'
+      currentStyle: 'formal',
+      isEditingMode: false
     });
   }
 }) 
