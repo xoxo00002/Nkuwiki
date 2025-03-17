@@ -289,9 +289,9 @@ Page({
       isPublic: this.data.isPublic
     };
     
-    // 调用现有的createPost云函数发布帖子
+    // 调用现有的云函数发布帖子
     wx.cloud.callFunction({
-      name: 'createPost', // 使用现有的createPost云函数
+      name: 'createPost', 
       data: postData,
       success: res => {
         wx.hideLoading();
