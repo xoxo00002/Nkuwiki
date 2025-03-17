@@ -42,7 +42,7 @@
   
   <!-- 空状态 -->
   <view class="empty-state" wx:else>
-    <image src="/assets/icons/default-avatar.png"></image>
+    <image src="{{userAvatar}}"></image>
     <text>你还没有任何{{mytitle}}，快去{{mytitle}}吧</text>
     <!-- <button class="create-btn" bindtap="createNewPost">发布第一条帖子</button> -->
   </view>
