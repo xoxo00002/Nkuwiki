@@ -3,10 +3,20 @@ Page({
     title: '',
     content: '',
     images: [],
-    visibility: 'public',  // 默认公开
-    isSubmitting: false,  // 添加提交状态标记
-    canSubmit: false,  // 新增一个状态来控制按钮
-    contentWarn: ''  // 新增一个状态来存储内容警告
+    tempImages: [],
+    showImagePreview: false,
+    currentPreviewIndex: 0,
+    isWikiEnabled: false,
+    isPublic: true,
+    allowComment: true,
+    wikiKnowledge: false,
+    currentStyle: 'formal',
+    previewImages: [],
+    imageSize: {
+      maxWidth: 1080, // 最大宽度
+      maxHeight: 1080, // 最大高度
+      quality: 0.8 // 压缩质量
+    }
   },
 
   // 监听标题输入
@@ -34,134 +44,299 @@ Page({
     });
   },
 
-  // 选择图片
-  async chooseImage() {
-    try {
-      const res = await wx.chooseImage({
-        count: 9 - this.data.images.length,
-        sizeType: ['compressed'],
-        sourceType: ['album', 'camera']
-      })
-
-      wx.showLoading({ title: '上传中...' })
-
-      // 上传图片到云存储
-      const uploadTasks = res.tempFilePaths.map(filePath => {
-        return wx.cloud.uploadFile({
-          cloudPath: `posts/${Date.now()}-${Math.random().toString(36).slice(-6)}.jpg`,
-          filePath
-        })
-      })
-
-      const uploadResults = await Promise.all(uploadTasks)
-      console.log('图片上传结果：', uploadResults)
-
-      const newImages = uploadResults.map(res => res.fileID)
-      console.log('新增图片fileID：', newImages)
-
-      this.setData({
-        images: [...this.data.images, ...newImages]
-      })
-
-      wx.hideLoading()
-    } catch (err) {
-      console.error('上传图片失败：', err)
-      wx.hideLoading()
-      wx.showToast({
-        title: '上传失败',
-        icon: 'none'
-      })
-    }
-  },
-
-  // 预览图片
-  previewImage(e) {
-    const { url } = e.currentTarget.dataset
-    wx.previewImage({
-      urls: this.data.images,
-      current: url
-    })
-  },
-
-  // 删除图片
-  deleteImage(e) {
-    const { index } = e.currentTarget.dataset
-    const images = [...this.data.images]
-    images.splice(index, 1)
-    this.setData({ images })
-  },
-
-  // 切换可见性
-  onVisibilityChange(e) {
+  // Wiki润色开关
+  toggleWiki() {
     this.setData({
-      visibility: e.detail.value
-    })
+      isWikiEnabled: !this.data.isWikiEnabled
+    });
   },
 
-  // 发布帖子
-  async submitPost() {
-    console.log('开始提交帖子...');
+  // 文风选择
+  selectStyle(e) {
+    this.setData({
+      currentStyle: e.currentTarget.dataset.style
+    });
+  },
+
+  // 公开设置
+  togglePublic() {
+    this.setData({
+      isPublic: !this.data.isPublic
+    });
+  },
+
+  // 评论设置
+  toggleComment() {
+    this.setData({
+      allowComment: !this.data.allowComment
+    });
+  },
+
+  // Wiki小知开关
+  toggleWikiKnowledge(e) {
+    this.setData({
+      wikiKnowledge: e.detail.value
+    });
+  },
+
+  // 选择图片
+  showImagePicker: function() {
+    const that = this;
+    const remainCount = 9 - this.data.images.length;
     
-    const userInfo = wx.getStorageSync('userInfo');
-    console.log('获取的用户信息:', userInfo);
-    
-    if (!userInfo) {
+    if (remainCount <= 0) {
       wx.showToast({
-        title: '请先登录',
+        title: '最多只能上传9张图片',
         icon: 'none'
       });
       return;
     }
-
-    wx.showLoading({ title: '提交中...' });
     
-    try {
-      console.log('准备提交数据:', {
-        title: this.data.title,
-        content: this.data.content,
-        images: this.data.images,
-        userInfo相关字段: {
-          authorId: userInfo._id,
-          authorName: userInfo.nickName,
-          authorAvatar: userInfo.avatarUrl,
-          loginType: userInfo.loginType
-        }
-      });
-
-      const res = await wx.cloud.callFunction({
-        name: 'createPost',
-        data: {
-          title: this.data.title,
-          content: this.data.content,
-          images: this.data.images,
-          // 添加用户标识信息
-          authorId: userInfo._id,
-          authorName: userInfo.nickName,
-          authorAvatar: userInfo.avatarUrl,
-          loginType: userInfo.loginType  // 添加登录类型标识
-        }
-      });
-
-      console.log('云函数返回结果:', res);
-
-      if (res.result && res.result.code === 0) {
-        wx.hideLoading();
-        wx.showToast({ title: '发布成功' });
-        console.log('帖子创建成功，ID:', res.result.data);
-        setTimeout(() => {
-          wx.navigateBack();
-        }, 1500);
-      } else {
-        throw new Error(res.result?.message || '发布失败，未知错误');
+    wx.chooseMedia({
+      count: remainCount,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      sizeType: ['compressed'],
+      success: function(res) {
+        const tempFiles = res.tempFiles;
+        const tempPaths = tempFiles.map(file => file.tempFilePath);
+        
+        // 打开预览并裁剪
+        that.setData({
+          previewImages: tempPaths,
+          showImagePreview: true,
+          currentPreviewIndex: 0
+        });
       }
-    } catch (err) {
-      console.error('发布失败详细信息:', err);
-      wx.hideLoading();
+    });
+  },
+
+  // 切换预览图片
+  switchPreviewImage: function(e) {
+    const index = e.currentTarget.dataset.index;
+    this.setData({
+      currentPreviewIndex: index
+    });
+  },
+
+  // 轮播图变化
+  swiperChange: function(e) {
+    this.setData({
+      currentPreviewIndex: e.detail.current
+    });
+  },
+
+  // 关闭预览
+  closePreview: function() {
+    this.setData({
+      showImagePreview: false,
+      previewImages: []
+    });
+  },
+
+  // 裁剪当前图片
+  cropCurrentImage: function() {
+    const that = this;
+    const index = this.data.currentPreviewIndex;
+    const imageSrc = this.data.previewImages[index];
+    
+    wx.editImage({
+      src: imageSrc,
+      success(res) {
+        // 更新裁剪后的图片
+        const newPreviewImages = [...that.data.previewImages];
+        newPreviewImages[index] = res.tempFilePath;
+        
+        that.setData({
+          previewImages: newPreviewImages
+        });
+      }
+    });
+  },
+
+  // 确认预览的图片
+  confirmPreview: function() {
+    const currentImages = this.data.images || [];
+    const newImages = [...currentImages, ...this.data.previewImages];
+    
+    this.setData({
+      images: newImages,
+      showImagePreview: false,
+      previewImages: []
+    });
+  },
+
+  // 批量编辑图片
+  batchEditImages: function() {
+    // 打开预览并允许编辑
+    this.setData({
+      previewImages: [...this.data.images],
+      showImagePreview: true,
+      currentPreviewIndex: 0
+    });
+  },
+
+  // 预览已上传图片
+  previewImage: function(e) {
+    const index = e.currentTarget.dataset.index;
+    const images = this.data.images;
+    
+    wx.previewImage({
+      current: images[index],
+      urls: images
+    });
+  },
+
+  // 删除图片
+  deleteImage: function(e) {
+    const index = e.currentTarget.dataset.index;
+    const images = [...this.data.images];
+    images.splice(index, 1);
+    
+    this.setData({
+      images: images
+    });
+  },
+
+  // 返回上一页
+  goBack: function() {
+    wx.navigateBack({
+      delta: 1
+    });
+  },
+
+  // 修改发帖函数，在提交前处理图片
+  submitPost: function() {
+    const that = this;
+    const { title, content, images } = this.data;
+    
+    // 验证输入
+    if (!title.trim()) {
       wx.showToast({
-        title: '发布失败: ' + (err.message || '未知错误'),
-        icon: 'none',
-        duration: 2500
+        title: '请输入标题',
+        icon: 'none'
       });
+      return;
     }
+    
+    if (!content.trim()) {
+      wx.showToast({
+        title: '请输入内容',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 显示加载中
+    wx.showLoading({
+      title: '正在处理图片...',
+      mask: true
+    });
+    
+    // 如果有图片，先处理图片
+    if (images.length > 0) {
+      this.processImages(images, 0, [], function(processedImages) {
+        // 处理完成后发布帖子
+        that.doSubmitPost(title, content, processedImages);
+      });
+    } else {
+      // 没有图片，直接发布
+      this.doSubmitPost(title, content, []);
+      wx.hideLoading();
+    }
+  },
+
+  // 处理图片（裁剪、压缩）
+  processImages: function(images, index, results, callback) {
+    const that = this;
+    
+    if (index >= images.length) {
+      // 所有图片处理完成
+      wx.hideLoading();
+      callback(results);
+      return;
+    }
+    
+    // 压缩图片
+    wx.compressImage({
+      src: images[index],
+      quality: that.data.imageSize.quality * 100, // 转为0-100的值
+      success(compressRes) {
+        results.push(compressRes.tempFilePath);
+        // 处理下一张
+        that.processImages(images, index + 1, results, callback);
+      },
+      fail() {
+        // 压缩失败，使用原图
+        results.push(images[index]);
+        that.processImages(images, index + 1, results, callback);
+      }
+    });
+  },
+
+  // 执行发帖请求
+  doSubmitPost: function(title, content, processedImages) {
+    wx.showLoading({
+      title: '发布中...',
+      mask: true
+    });
+    
+    // 准备要发送到云函数的数据
+    const postData = {
+      title: title,
+      content: content,
+      images: processedImages,
+      isPublic: this.data.isPublic
+    };
+    
+    // 调用现有的云函数发布帖子
+    wx.cloud.callFunction({
+      name: 'createPost', 
+      data: postData,
+      success: res => {
+        wx.hideLoading();
+        if (res.result && res.result.code === 0) {
+          wx.showToast({
+            title: '发布成功',
+            icon: 'success',
+            success: function() {
+              // 延迟返回上一页
+              setTimeout(() => {
+                wx.navigateBack();
+              }, 1500);
+            }
+          });
+        } else {
+          wx.showToast({
+            title: res.result ? res.result.message : '发布失败',
+            icon: 'none'
+          });
+        }
+      },
+      fail: err => {
+        console.error('发布失败:', err);
+        wx.hideLoading();
+        wx.showToast({
+          title: '发布失败，请稍后重试',
+          icon: 'none'
+        });
+      }
+    });
+  },
+
+  onLoad: function() {
+    this.setData({
+      title: '',
+      content: '',
+      images: [],
+      tempImages: [],
+      showImagePreview: false,
+      currentPreviewIndex: 0,
+      isWikiEnabled: false,
+      isPublic: true,
+      allowComment: true,
+      wikiKnowledge: false,
+      currentStyle: 'formal'
+    });
   }
 }) 
