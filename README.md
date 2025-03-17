@@ -7,24 +7,46 @@
 
 ## 项目结构说明
 
-```
+```plain text
 project
 │
 ├── pages/ # 页面文件夹
-│ ├── index/ # 首页
-│ ├── search/ # 搜索页
-│ ├── discover/ # 发现页
-│ └── profile/ # 个人中心
+│   ├── index/ # 首页
+│   │   ├── index.js # 页面逻辑
+│   │   ├── index.json # 页面配置
+│   │   ├── index.wxml # 页面结构
+│   │   └── index.wxss # 页面样式
+│   ├── search/ # 搜索页
+│   ├── discover/ # 发现页
+│   ├── profile/ # 个人中心
+│   ├── login/ # 登录页
+│   └── post/ # 发帖页
+│
+├── api/ # API接口封装
+│   ├── agent_api.md # Agent API文档
+│   ├── mysql_api.md # MySQL API文档
+│   └── README.md # API说明文档
 │
 ├── assets/ # 静态资源
-│ └── icons/ # 图标文件
+│   └── icons/ # 图标文件
+│
+├── utils/ # 工具函数
+│   └── util.js # 通用工具函数
+│
+├── cloudfunctions/ # 云函数
+│   └── login/ # 登录相关云函数
+│
+├── typings/ # TypeScript类型定义
 │
 ├── app.js # 小程序入口文件
 ├── app.json # 小程序全局配置
 ├── app.wxss # 全局样式
-└── project.config.json # 项目配置文件
+├── project.config.json # 项目配置文件
+├── project.private.config.json # 项目私有配置
+├── sitemap.json # 小程序搜索配置
+├── jsconfig.json # JavaScript配置文件
+└── .cursorrules # Cursor IDE配置文件
 ```
-
 
 ## 重要文件说明
 
@@ -41,7 +63,8 @@ project
 
 ### 1. 文件类型介绍
 
-前端设计原型图：https://mastergo.com/goto/HrncAZgN?page_id=M&file=152887751273499 
+前端设计原型图：https://mastergo.com/goto/HrncAZgN?page_id=M&file=152887751273499
+
 - `WXML`：框架设计的一套标签语言，用于描述页面结构
 - `WXSS`：样式语言，类似 CSS
 - `JS`：小程序的逻辑层，处理数据和用户操作
@@ -58,12 +81,12 @@ project
 ### 3. 生命周期
 
 页面生命周期函数：
+
 - `onLoad`: 页面加载时触发
 - `onShow`: 页面显示时触发
 - `onReady`: 页面初次渲染完成时触发
 - `onHide`: 页面隐藏时触发
 - `onUnload`: 页面卸载时触发
-
 
 ## 开发注意事项
 
@@ -73,7 +96,6 @@ project
 4. 遵循小程序的[设计指南](https://developers.weixin.qq.com/miniprogram/design/)
 5. 注意用户数据隐私保护
 6. 做好错误处理和异常捕获
-
 
 ## 发布流程
 
@@ -96,4 +118,3 @@ project
 3. 本地存储有大小限制
 4. 部分 API 仅在真机上可用
 5. 注意兼容性问题，特别是低版本
-
