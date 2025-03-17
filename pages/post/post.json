@@ -1,5 +1,6 @@
 {
-  "navigationBarTitleText": "发布帖子",
+  "navigationBarTitleText": "",
+  "navigationStyle": "custom",
   "enablePullDownRefresh": false,
   "usingComponents": {}
 } 
