@@ -1,6 +1,7 @@
 // 我的帖子页面
 Page({
   data: {
+    userAvatar: "",
     posts: [],
     page: 1,
     pageSize: 10,
@@ -39,6 +40,16 @@ Page({
       
       const page = refresh ? 1 : this.data.page
       const userInfo = wx.getStorageSync('userInfo')
+
+      wx.cloud.database().collection("users").where({
+        openid: userInfo.openid
+      }).get()
+          .then(result => {
+            this.setData({
+              userAvatar: result.data[0].avatarUrl
+            });
+            console.log("获取头像", this.userAvatar);
+          })
       
       console.log('当前用户信息:', userInfo)
       
