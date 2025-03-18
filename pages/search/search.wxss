@@ -15,13 +15,87 @@ page {
 }
 
 /* 搜索框样式 */
+.search-container {
+  padding: 20rpx;
+  background: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
 .search-box {
   display: flex;
   align-items: center;
-  margin: 20rpx;
-  padding: 15rpx 30rpx;
-  background: #f7f7f7;
-  border-radius: 40rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 10rpx 20rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 72rpx;
+  font-size: 28rpx;
+}
+
+.search-btn {
+  margin-left: 20rpx;
+  background: #07c160;
+  color: #fff;
+  font-size: 28rpx;
+  padding: 0 30rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 8rpx;
+}
+
+.content-area {
+  margin-top: 120rpx;
+  padding-bottom: 30rpx;
+}
+
+.result-container {
+  padding: 30rpx;
+  background: #fff;
+  margin-bottom: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.result-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.result-content {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #333;
+}
+
+.sources-container {
+  margin-top: 10rpx;
+  margin-bottom: 30rpx;
+  padding: 30rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.sources-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.sources-list {
+  font-size: 28rpx;
+}
+
+.source-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eee;
+  color: #666;
 }
 
 .icon-search {
@@ -38,14 +112,6 @@ page {
   opacity: 0.5;
 }
 
-
-.search-box input {
-  flex: 1;
-  padding: 10rpx;
-  font-size: 28rpx;
-  color: #999;
-}
-
 .nav-icons {
   display: flex;
   gap: 20rpx;
@@ -55,31 +121,34 @@ page {
 .category-nav {
   display: flex;
   justify-content: space-between;
-  padding: 15rpx 20rpx;
+  padding: 20rpx;
   gap: 15rpx;
+  margin-top: 10rpx;
 }
 
 .category-item {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12rpx 15rpx;
+  padding: 20rpx 15rpx;
   background: #f8f9fe;
   border-radius: 12rpx;
 }
 
 .category-icon {
-  width: 36rpx;
-  height: 36rpx;
-  margin-right: 8rpx;
-  opacity: 0.8;
+  width: 60rpx;
+  height: 60rpx;
+  margin-bottom: 10rpx;
 }
 
-.category-item text {
-  font-size: 24rpx;
+.category-item-text {
+  font-size: 26rpx;
   color: #6687ff;
   font-weight: 500;
+  display: block;
+  text-align: center;
 }
 
 /* 贡献提示样式 */
@@ -239,4 +308,9 @@ page {
 
 .tab-item.active {
   color: #07c160;
+}
+
+.default-content {
+  width: 100%;
+  margin-top: 20rpx;
 }

@@ -5,6 +5,13 @@ Page({
     sources: [], // 引用来源
   },
 
+  // 处理输入框变化
+  onInputChange(e) {
+    this.setData({
+      searchText: e.detail.value
+    });
+  },
+
   // 处理搜索事件
   handleSearch() {
     const { searchText } = this.data;
@@ -40,6 +47,10 @@ Page({
   },
 
   onLoad: function() {
-    // 页面加载时的初始化逻辑
+    // 确保初始状态下searchResult为null
+    this.setData({
+      searchResult: null,
+      sources: []
+    });
   }
 }) 
