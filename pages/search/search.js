@@ -1,6 +1,7 @@
 const app = getApp()
 const config = app.globalData.config || {};
 const API_BASE_URL = config.services?.app?.base_url || 'http://localhost:80';
+const towxml = require('../../wxcomponents/towxml/index');
 
 // 简单的Markdown解析函数
 function parseMarkdown(markdown) {
@@ -17,8 +18,8 @@ function parseMarkdown(markdown) {
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     
-    // 链接
-    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="md-link">$1</a>')
+    // 处理![title]()格式为标题超链接
+    .replace(/!\[(.*?)\]\((.*?)\)/g, '<navigator url="/pages/webview/webview?url=$2" class="md-link">$1</navigator>')
     
     // 无序列表
     .replace(/^\s*[-*+]\s+(.*?)$/gm, '<view class="md-li">• $1</view>')
@@ -40,9 +41,6 @@ function parseMarkdown(markdown) {
     
     // 段落
     .replace(/\n\n/g, '</view><view class="md-p">')
-    
-    // URL突出显示
-    .replace(/(https?:\/\/[^\s<]+)/g, '<text class="md-url">$1</text>');
   
   // 确保段落包裹
   html = '<view class="md-p">' + html + '</view>';
@@ -70,7 +68,8 @@ Page({
     _lastMarkdown: '',
     _lastMarkdownHtml: '',
     usePlainText: false,  // 是否使用纯文本模式（不使用富文本渲染）
-    textContent: ''  // 存储纯文本内容
+    textContent: '',  // 存储纯文本内容
+    richTextContent: null  // 存储美化后的文本内容
   },
 
   // 处理输入框变化
@@ -158,8 +157,92 @@ Page({
     this.startSimpleStream(searchValue);
   },
 
-  // 简化的流式响应实现
-  startSimpleStream(query) {
+  // 实时美化文本内容，识别链接、Email等
+  formatRichTextContent: function(text) {
+    if (!text || this.data.usePlainText) return;
+    
+    try {
+      // 增强链接识别的预处理
+      let processedText = text.trim(); // 添加trim()去掉首尾空白
+      
+      // 将标题文本转换为![title]()格式
+      processedText = processedText.replace(/^(.*?)[:：]\s*(https?:\/\/[^\s<]+)$/gm, (match, title, url) => {
+        // 如果标题部分为空，则不处理
+        if (!title.trim()) return match;
+        return `![${title}](${url})`;
+      });
+      
+      // 使用 towxml 处理文本
+      const result = towxml(processedText, 'markdown', {
+        theme: 'light',
+        audio: false,
+        external_link: true,
+        emoji: false,
+        latex: false,
+        highlight: false,
+        events: {
+          tap: (e) => {
+            // 处理链接点击
+            if (e.currentTarget.dataset.data && e.currentTarget.dataset.data.attr && e.currentTarget.dataset.data.attr.href) {
+              const url = e.currentTarget.dataset.data.attr.href;
+              if (url.startsWith('http')) {
+                wx.showActionSheet({
+                  itemList: ['复制链接', '在浏览器中打开'],
+                  success: function(res) {
+                    if (res.tapIndex === 0) {
+                      wx.setClipboardData({
+                        data: url,
+                        success: function() {
+                          wx.showToast({
+                            title: '链接已复制',
+                            icon: 'success'
+                          });
+                        }
+                      });
+                    } else if (res.tapIndex === 1) {
+                      wx.navigateTo({
+                        url: `/pages/webview/webview?url=${encodeURIComponent(url)}`,
+                        fail: function() {
+                          wx.setClipboardData({
+                            data: url,
+                            success: function() {
+                              wx.showModal({
+                                title: '链接已复制',
+                                content: '链接已复制到剪贴板，您可以在浏览器中打开',
+                                showCancel: false
+                              });
+                            }
+                          });
+                        }
+                      });
+                    }
+                  }
+                });
+              }
+            }
+          }
+        }
+      });
+
+      this.setData({
+        richTextContent: result
+      });
+      
+    } catch (error) {
+      console.error('处理富文本失败:', error);
+      this.setData({
+        richTextContent: {
+          child: [{
+            type: 'text',
+            text: text.trim() // 这里也添加trim()
+          }]
+        }
+      });
+    }
+  },
+
+  // 处理流式响应
+  startSimpleStream: function(query) {
     const that = this;
     
     // 构建请求数据
@@ -173,8 +256,17 @@ Page({
     console.log('请求URL:', `${API_BASE_URL}/agent/chat`);
     
     // 获取系统信息
-    const systemInfo = wx.getSystemInfoSync();
-    const isDevTool = systemInfo.platform === 'devtools';
+    let isDevTool = false;
+    try {
+      const appBaseInfo = wx.getAppBaseInfo();
+      isDevTool = appBaseInfo.platform === 'devtools';
+      console.log('系统环境:', appBaseInfo.platform);
+    } catch (e) {
+      console.warn('获取系统信息失败');
+    }
+    
+    // 初始化累积的响应文本
+    let accumulatedText = '';
     
     // 使用wx.request实现SSE
     const requestTask = wx.request({
@@ -185,8 +277,8 @@ Page({
         'content-type': 'application/json',
         'Accept': 'text/event-stream'
       },
-      enableChunked: true, // 启用分块传输，支持流式响应
-      responseType: 'arraybuffer', // 使用arraybuffer接收二进制数据
+      enableChunked: true, // 启用分块传输
+      responseType: 'arraybuffer',
       success(res) {
         console.log('请求成功初始化');
       },
@@ -197,10 +289,6 @@ Page({
           icon: 'none'
         });
         that.setData({ loading: false, isStreaming: false });
-      },
-      complete() {
-        console.log('请求完成');
-        that.setData({ loading: false, isStreaming: false });
       }
     });
     
@@ -210,7 +298,7 @@ Page({
     // 监听数据接收事件
     requestTask.onChunkReceived(function(res) {
       try {
-        // 第一次收到数据时，设置isStreaming为true以显示打字光标效果
+        // 第一次收到数据时，设置isStreaming为true
         if (!receivedFirstChunk) {
           receivedFirstChunk = true;
           that.setData({ isStreaming: true });
@@ -219,17 +307,15 @@ Page({
         // 将二进制数据转换为字符串
         let text;
         if (isDevTool) {
-          // 开发者工具中使用TextDecoder
           text = new TextDecoder('utf-8').decode(new Uint8Array(res.data));
         } else {
-          // 真机中使用字符串转换
           text = String.fromCharCode.apply(null, new Uint8Array(res.data));
         }
         
         // 处理数据
         let content = '';
         
-        // 处理SSE格式 (data: {...})
+        // 处理SSE格式
         if (text.includes('data:')) {
           const matches = text.match(/data:\s*({.+?})/g) || [];
           for (const match of matches) {
@@ -237,7 +323,6 @@ Page({
               const jsonStr = match.replace(/^data:\s*/, '');
               const data = JSON.parse(jsonStr);
               
-              // 提取内容
               if (data.content !== undefined) {
                 // 处理Unicode编码
                 if (typeof data.content === 'string' && data.content.includes('\\u')) {
@@ -255,35 +340,29 @@ Page({
             }
           }
         } else if (text.startsWith('{') && text.endsWith('}')) {
-          // 直接JSON格式
           try {
             const data = JSON.parse(text);
             if (data.content !== undefined) {
-              // 处理Unicode编码
-              if (typeof data.content === 'string' && data.content.includes('\\u')) {
-                try {
-                  content += JSON.parse('"' + data.content.replace(/"/g, '\\"') + '"');
-                } catch (e) {
-                  content += data.content;
-                }
-              } else {
-                content += data.content;
-              }
+              content += data.content;
             }
           } catch (e) {
             console.warn('解析JSON失败:', e);
           }
         } else {
-          // 纯文本格式
           content = text;
         }
         
-        // 更新显示内容
+        // 更新累积的文本
         if (content) {
-          const newContent = that.data.textContent + content;
+          accumulatedText += content;
           that.setData({
-            textContent: newContent
+            textContent: accumulatedText
           });
+          
+          // 使用towxml处理富文本
+          if (!that.data.usePlainText) {
+            that.formatRichTextContent(accumulatedText);
+          }
         }
       } catch (error) {
         console.error('处理数据失败:', error);
@@ -301,12 +380,22 @@ Page({
       return;
     }
     
+    // 使用纯文本内容进行复制，确保格式正确
+    const textToCopy = this.data.textContent;
+    
     wx.setClipboardData({
-      data: this.data.textContent,
+      data: textToCopy,
       success() {
         wx.showToast({
           title: '复制成功',
           icon: 'success'
+        });
+      },
+      fail(err) {
+        console.error('复制失败:', err);
+        wx.showToast({
+          title: '复制失败',
+          icon: 'none'
         });
       }
     });
@@ -316,147 +405,11 @@ Page({
   clearResult() {
     this.setData({
       textContent: '',
+      richTextContent: null,
       isStreaming: false
     });
   },
   
-  // 测试函数
-  testStream() {
-    this.setData({
-      searchValue: '测试流式响应',
-      textContent: '',
-      loading: true,
-      isStreaming: false // 不立即显示流式状态
-    });
-    
-    // 模拟接收第一个数据块后设置isStreaming为true
-    setTimeout(() => {
-      this.setData({ isStreaming: true });
-    }, 500);
-    
-    // 模拟流式响应
-    const testData = [
-      '这是一个',
-      '简单的',
-      '流式响应',
-      '测试，',
-      '每个片段',
-      '会逐步',
-      '显示。',
-      '\n\n',
-      '1. 第一点',
-      '\n',
-      '2. 第二点',
-      '\n',
-      '3. 第三点'
-    ];
-    
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index >= testData.length) {
-        clearInterval(interval);
-        this.setData({
-          loading: false,
-          isStreaming: false
-        });
-        return;
-      }
-      
-      const newContent = this.data.textContent + testData[index];
-      this.setData({
-        textContent: newContent
-      });
-      
-      index++;
-    }, 300);
-  },
-
-  // 滚动到底部
-  scrollToBottom: function() {
-    try {
-      // 延迟执行，确保内容已渲染
-      setTimeout(() => {
-        wx.createSelectorQuery()
-          .select('.result-container')
-          .boundingClientRect(function(rect){
-            if (rect) {
-              wx.pageScrollTo({
-                scrollTop: rect.bottom,
-                duration: 300
-              });
-            }
-          })
-          .exec();
-      }, 100);
-    } catch (e) {
-      console.error('滚动到底部失败:', e);
-    }
-  },
-  
-  // 简单的Markdown转HTML实现 - 优化版
-  simpleMarkdownToHtml: function(markdown) {
-    if (!markdown) return '';
-    
-    try {
-      // 对大型文本进行简单的缓存处理
-      if (this._lastMarkdown === markdown) {
-        console.log('使用缓存的Markdown HTML');
-        return this._lastMarkdownHtml;
-      }
-      
-      console.log('解析Markdown内容(长度):', markdown.length);
-      
-      // 检查内容是否包含未解码的Unicode
-      if (typeof markdown === 'string' && markdown.includes('\\u')) {
-        try {
-          console.log('检测到Unicode转义序列，尝试解码');
-          // 尝试解码Unicode转义序列
-          markdown = JSON.parse('"' + markdown.replace(/"/g, '\\"') + '"');
-          console.log('Unicode解码后长度:', markdown.length);
-        } catch (e) {
-          console.warn('Unicode解码失败:', e);
-          // 保持原样
-        }
-      }
-      
-      // 确保内容至少被包裹在段落标签中
-      let html = '';
-      if (markdown.trim().length === 0) {
-        // 如果是空内容，至少显示一个空段落
-        html = '<view class="md-p">暂无内容</view>';
-      } else if (markdown.length < 3 && !markdown.includes('\n')) {
-        // 对于非常短的内容（1-2个字符），不进行Markdown解析，直接包装
-        html = `<view class="md-p">${markdown}</view>`;
-      } else {
-        // 使用parseMarkdown函数处理markdown
-        html = parseMarkdown(markdown);
-        
-        // 检查是否成功生成HTML
-        if (!html || html.trim() === '') {
-          console.warn('Markdown解析生成了空HTML，使用备用方法');
-          // 备用方法：简单替换换行符并包装在段落中
-          html = '<view class="md-p">' + markdown.replace(/\n/g, '<br>') + '</view>';
-        }
-      }
-      
-      // 确保生成的HTML不为空
-      if (!html || html.trim() === '') {
-        html = '<view class="md-p">内容解析错误，请尝试使用纯文本模式查看</view>';
-      }
-      
-      // 缓存处理结果
-      this._lastMarkdown = markdown;
-      this._lastMarkdownHtml = html;
-      
-      console.log('生成HTML结果长度:', html.length);
-      return html;
-    } catch (error) {
-      console.error('Markdown转换错误:', error);
-      // 发生错误时，确保至少显示原始文本
-      return '<view class="md-p">' + (markdown || '内容解析错误') + '</view>';
-    }
-  },
-
   // 处理响应错误
   handleResponseError: function(errorMsg) {
     this.setData({
@@ -495,9 +448,41 @@ Page({
     
     // 判断来源类型，处理不同来源的打开方式
     if (source.startsWith('http')) {
-      // 网页链接
-      wx.navigateTo({
-        url: '/pages/webview/webview?url=' + encodeURIComponent(source)
+      // 提供更好的用户体验
+      wx.showActionSheet({
+        itemList: ['复制链接', '在浏览器中打开'],
+        success: function(res) {
+          if (res.tapIndex === 0) {
+            // 复制链接
+            wx.setClipboardData({
+              data: source,
+              success: function() {
+                wx.showToast({
+                  title: '链接已复制',
+                  icon: 'success'
+                });
+              }
+            });
+          } else if (res.tapIndex === 1) {
+            // 尝试通过webview页面打开链接
+            wx.navigateTo({
+              url: `/pages/webview/webview?url=${encodeURIComponent(source)}`,
+              fail: function() {
+                // 如果没有webview页面，则提示用户在浏览器打开
+                wx.setClipboardData({
+                  data: source,
+                  success: function() {
+                    wx.showModal({
+                      title: '链接已复制',
+                      content: '链接已复制到剪贴板，您可以在浏览器中打开',
+                      showCancel: false
+                    });
+                  }
+                });
+              }
+            });
+          }
+        }
       });
     } else {
       // 其他类型资源，例如文件、文档等

@@ -56,10 +56,12 @@
         "selectedIconPath": "assets/icons/profile-active.png"
       }
     ],
-    "iconWidth": "16px",
-    "iconHeight": "16px"
+    "iconWidth": 16,
+    "iconHeight": 16
   },
-  "usingComponents": {},
+  "usingComponents": {
+    "towxml": "wxcomponents/towxml/towxml"
+  },
   "requiredPrivateInfos": [
     "chooseLocation",
     "getLocation"

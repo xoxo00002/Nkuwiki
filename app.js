@@ -13,15 +13,9 @@ App({
     // 检查登录状态
     this.checkLoginStatus()
 
-    // 测试时间格式化
-    this.testTimeFormat()
-
-    // 测试时间
-    this.testTime()
-
-      const logs = wx.getStorageSync('logs') || []
-      logs.unshift(Date.now())
-      wx.setStorageSync('logs', logs)
+    const logs = wx.getStorageSync('logs') || []
+    logs.unshift(Date.now())
+    wx.setStorageSync('logs', logs)
   },
 
   checkLoginStatus: function() {
@@ -30,7 +24,7 @@ App({
       this.globalData.userInfo = userInfo;
     } else {
       // 跳转登录页面
-      wx.redirectTo({
+      wx.reLaunch({
         url: '/pages/login/login'
       });
     }
