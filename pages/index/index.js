@@ -1,4 +1,5 @@
 // index.js
+const app = getApp();
 const defaultAvatarUrl = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
 
 let isLiking = false  // 添加在 Page 外部
@@ -27,7 +28,12 @@ Page({
     showCommentInput: false,
     commentText: '',
     commentImages: [],
-    showExpandedEditor: false
+    showExpandedEditor: false,
+    searchValue: '',
+    searchHistory: [],
+    searchResults: [],
+    currentPage: 1,
+    baseUrl: `${app.globalData.config.services.app.base_url}:80`,
   },
   bindViewTap() {
     wx.navigateTo({

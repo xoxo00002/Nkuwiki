@@ -15,10 +15,40 @@
   height: 48rpx;
 } 
 
-/* 添加全局控制以防止图标过大 */
-.action-icon, .icon {
-  max-width: 40rpx;
-  max-height: 40rpx;
-  width: auto;
-  height: auto;
+/* 通用图标样式基础类 */
+.icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 搜索相关图标样式 */
+.search-icon, .voice-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 分类导航图标样式 */
+.category-icon {
+  width: 80rpx;
+  height: 80rpx;
+}
+
+/* 功能按钮图标样式 */
+.refresh-icon, .source-icon, .recommend-icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+/* 结果标题图标 */
+.result-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 10rpx;
+}
+
+/* 结果操作图标 */
+.action-icon {
+  width: 40rpx;
+  height: 40rpx; 
+  margin-right: 8rpx;
 }
