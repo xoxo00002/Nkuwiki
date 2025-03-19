@@ -40,5 +40,6 @@
   "packOptions": {
     "ignore": [],
     "include": []
-  }
+  },
+  "projectname": "app"
 }
