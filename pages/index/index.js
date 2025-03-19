@@ -33,7 +33,7 @@ Page({
     searchHistory: [],
     searchResults: [],
     currentPage: 1,
-    baseUrl: `${app.globalData.config.services.app.base_url}:80`,
+    baseUrl: app.globalData.config.services.app.base_url,
   },
   bindViewTap() {
     wx.navigateTo({

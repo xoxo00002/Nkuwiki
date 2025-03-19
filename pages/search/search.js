@@ -1,6 +1,6 @@
 const app = getApp()
 const config = app.globalData.config || {};
-const API_BASE_URL = config.services?.app?.base_url || 'http://localhost:80';
+const API_BASE_URL = config.services?.app?.base_url || 'https://nkuwiki.com';
 const towxml = require('../../wxcomponents/towxml/index');
 
 // 简单的Markdown解析函数
@@ -58,7 +58,7 @@ Page({
     currentPage: 1,
     pageSize: 10,
     hasMore: true,
-    baseUrl: `${app.globalData.config.services.app.base_url}:${app.globalData.config.services.app.port}`,
+    baseUrl: app.globalData.config.services.app.base_url,
     isStreaming: false,
     typingText: '',
     fullResponse: '',

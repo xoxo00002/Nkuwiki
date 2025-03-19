@@ -54,7 +54,7 @@ Agent API提供了与AI助手对话和知识库搜索的功能。所有接口都
 请求：
 
 ```bash
-curl -X POST "http://localhost/agent/chat" \
+curl -X POST "https://nkuwiki.com/agent/chat" \
      -H "Content-Type: application/json" \
      -d '{"query": "南开大学的校训是什么？"}'
 

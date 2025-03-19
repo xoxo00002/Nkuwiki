@@ -65,8 +65,7 @@ App({
     config: {
       services: {
         app: {
-          base_url: 'http://10.130.42.171',
-          port: 80,
+          base_url: 'https://nkuwiki.com',
           conversation_max_tokens: 100000000,
           expires_in_seconds: 3600
         }
