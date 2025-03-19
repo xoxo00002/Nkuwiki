@@ -1,5 +1,6 @@
 // 优化点赞云函数
 const cloud = require('wx-server-sdk')
+const {getWXContext} = require("wx-server-sdk");
 
 cloud.init({
   env: 'nkuwiki-0g6bkdy9e8455d93'
@@ -45,7 +46,7 @@ async function toggleLike(openid, postId) {
       likedUsersCount: likedUsers.length
     });
 
-    // 更新点赞状态
+    // 更新posts点赞状态
     await db.collection('posts').doc(postId).update({
       data: {
         likes: hasLiked ? _.inc(-1) : _.inc(1),
@@ -53,6 +54,50 @@ async function toggleLike(openid, postId) {
         updateTime: db.serverDate()
       }
     });
+
+    //更新notification.posts的点赞人openid
+    db.collection("notification").doc(postQuery.data[0].authorOpenId).get()
+        .then(async res => {
+          for(let i = 0; i<res.data.posts.length; i++) {
+            if (res.data.posts[i].postId === postId/* && res.data._id !== cloud.getWXContext().OPENID*/) {
+              let users = {
+                openid: openid,
+                likeTime: new Date().getTime(),
+                postTitle: postQuery.data[0].title
+              }
+              //用if代替下边的三目运算符
+              //for取得openid
+              //明天再写
+              if (hasLiked) {
+                for (let j = 0; j < res.data.posts[i].likesUsers.length; j++) {
+                  await db.collection("notification").where({
+                    [`posts.${i}.likesUsers.${j}.openid`]: openid
+                  }).update({
+                    data: {
+                      [`posts.${i}.likesUsers.${j}`]: _.remove()
+                    }
+                  });
+                  /*await db.collection("notification").doc(postQuery.data[0].authorOpenId).update({
+                    data: {
+                      isRead: true
+                    }
+                  });*/
+                }
+              }
+              else{
+                await db.collection("notification").doc(postQuery.data[0].authorOpenId).update({
+                  data:{
+                    isRead: false,
+                    [`posts.${i}.likesUsers`]: _.push(users),
+                  }
+                });
+              }
+            }
+          }
+        })
+        .catch(err => {
+          console.log("更新点赞人员openid失败")
+        });
 
     return {
       success: true,

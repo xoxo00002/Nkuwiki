@@ -28,6 +28,7 @@ Page({
     showCommentInput: false,
     commentText: '',
     commentImages: [],
+    isRead: true,
     showExpandedEditor: false,
     searchValue: '',
     searchHistory: [],
@@ -71,18 +72,48 @@ Page({
   },
   onLoad() {
     console.log('页面加载')
+    this.getIsRead();
     this.loadPosts()
     this.setData({
       currentPostId: '',  // 初始化为空字符串
       currentPostIndex: -1
     })
   },
+
+  async getIsRead(){
+
+    try{
+      const res = await wx.cloud.callFunction({
+        name: "getOpenID"
+      });
+
+      var userId = res.result.openid;
+
+      console.log("获取用户id", userId);
+    }catch(err){
+      console.log("获取用户id失败");
+    }
+
+    wx.cloud.database().collection("notification").doc(userId).get()
+        .then(async res => {
+          this.setData({
+            isRead: res.data.isRead
+          })
+          console.log(this.data.isRead);
+        })
+        .catch(err => {
+          console.log("获取isRead失败");
+        });
+  },
+
   onShow() {
     console.log('页面显示')
   },
   // 下拉刷新
   onPullDownRefresh() {
     console.log('触发下拉刷新')
+
+    this.getIsRead();
 
     // 维持页面位置，只刷新数据
     this.loadPosts(true).then(() => {
@@ -119,7 +150,7 @@ Page({
         .get()
 
       const posts = result.data
-      console.log('获取到的帖子数量:', posts.length, '刷新模式:', refresh)
+      //console.log('获取到的帖子数量:', posts.length, '刷新模式:', refresh)
 
       // 添加更多日志来查看问题
       if (posts.length === 0) {
@@ -144,7 +175,7 @@ Page({
 
       // 收集所有不重复的作者ID
       const authorIds = [...new Set(posts.map(post => post.authorId))];
-      console.log("收集到的作者ID数量:", authorIds.length);
+      //console.log("收集到的作者ID数量:", authorIds.length);
 
       // 查询这些作者的最新信息 - 关键修改：使用_id字段匹配authorId
       let users = [];
@@ -290,9 +321,9 @@ Page({
           // 更新作者信息为最新
           post.authorName = author.nickName || post.authorName;
           post.authorAvatar = author.avatarUrl || post.authorAvatar;
-          console.log(`更新帖子${post._id}的作者信息:`, post.authorName);
+          //console.log(`更新帖子${post._id}的作者信息:`, post.authorName);
         } else {
-          console.log(`未找到帖子${post._id}作者(ID:${post.authorId})的信息`);
+          //console.log(`未找到帖子${post._id}作者(ID:${post.authorId})的信息`);
         }
       });
 
@@ -853,5 +884,15 @@ Page({
       // 解除标志
       this.setData({ isFavoriting: false })
     }
+  },
+
+  //go to notification page
+  goToNotification() {
+    wx.navigateTo({
+      url: '/pages/notification/notification'
+    });
+    this.data.isRead = true;
+
+    console.log(this.data.isRead);
   }
 })
