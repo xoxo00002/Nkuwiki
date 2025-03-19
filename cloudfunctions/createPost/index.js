@@ -98,6 +98,7 @@ exports.main = async (event, context) => {
     //更新notification的posts
     let data = {
       postId: result._id,
+      postTitle: title,
       likesUsers: [],
       favouriteUsers: [],
       comments: []
