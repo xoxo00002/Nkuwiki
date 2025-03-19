@@ -1,0 +1,88 @@
+<!-- 美化的搜索页面 -->
+<view class="page-container">
+	<view class="search-container">
+		<view class="search-box" hover-class="search-box-hover">
+			<image class="search-icon" src="/assets/icons/index/plus.png" mode="aspectFit" bindtap="uploadFile" />
+			<input
+				class="search-input"
+				placeholder="探索关于南开的一切，或者贡献您的资料"
+				placeholder-style="color: #999;"
+				value="{{ searchValue }}"
+				bindinput="onInputChange"
+				bindconfirm="handleSearch"
+				focus="{{ false }}"
+			/>
+			<image class="mic-icon" src="/assets/icons/search/voice.png" mode="aspectFit" bindtap="startVoiceSearch" />
+		</view>
+		<!-- 分类按钮区域 -->
+		<view class="category-buttons">
+			<view class="category-item">
+				<image class="category-icon" src="/assets/icons/search/website.png" mode="aspectFit" />
+				<text class="category-text">网站</text>
+			</view>
+			<view class="category-item">
+				<image class="category-icon" src="/assets/icons/search/wechat.png" mode="aspectFit" />
+				<text class="category-text">微信</text>
+			</view>
+			<view class="category-item">
+				<image class="category-icon" src="/assets/icons/search/market.png" mode="aspectFit" />
+				<text class="category-text">集市</text>
+			</view>
+			<view class="category-item">
+				<image class="category-icon" src="/assets/icons/search/douyin.png" mode="aspectFit" />
+				<text class="category-text">抖音</text>
+			</view>
+		</view>
+		<!-- 贡献提示区域 -->
+		<view class="contribution-tip">
+			<image class="token-icon" src="/assets/icons/search/token.png" mode="aspectFit" />
+			<text class="tip-text">今日您已贡献了10条知识，获取1000token!</text>
+		</view>
+	</view>
+	<!-- 结果区域 -->
+	<view class="content-area">
+		<!-- 加载指示器 -->
+		<view class="loading-wrapper" wx:if="{{ loading && !textContent }}">
+			<view class="loading-dots">
+				<view class="loading-dot"></view>
+				<view class="loading-dot"></view>
+				<view class="loading-dot"></view>
+			</view>
+			<text class="loading-text">南开小知正在思考</text>
+		</view>
+		<!-- 流式响应结果 -->
+		<view class="result-container" wx:if="{{ textContent }}">
+			<!-- 纯文本内容 -->
+			<scroll-view scroll-y class="text-content" wx:if="{{ usePlainText }}">
+				<text selectable="true">{{ textContent }}</text>
+				<view wx:if="{{ isStreaming }}" class="typing-cursor"></view>
+			</scroll-view>
+			<!-- 美化的富文本内容 -->
+			<scroll-view scroll-y class="text-content" wx:else>
+				<towxml nodes="{{ richTextContent }}" />
+				<view wx:if="{{ isStreaming }}" class="typing-cursor"></view>
+			</scroll-view>
+			<!-- 底部操作按钮 -->
+			<view class="result-actions">
+				<view class="action-btn" hover-class="action-btn-hover" bindtap="clearResult">
+					<image class="action-icon" src="/assets/icons/eraser.png" mode="aspectFit" />
+					<text>清空</text>
+				</view>
+				<view class="action-btn" hover-class="action-btn-hover" bindtap="copyResult">
+					<image class="action-icon" src="/assets/icons/copy.png" mode="aspectFit" />
+					<text>复制内容</text>
+				</view>
+				<view class="action-btn" hover-class="action-btn-hover" bindtap="togglePlainTextMode">
+					<image class="action-icon" src="/assets/icons/txt.png" mode="aspectFit" />
+					<text>{{ usePlainText ? '富文本模式' : '纯文本模式' }}</text>
+				</view>
+			</view>
+		</view>
+		<!-- 默认提示 -->
+		<view class="empty-state" wx:if="{{ !loading && !textContent }}">
+			<image class="empty-icon" src="/assets/icons/search/search.png" mode="aspectFit" />
+			<text class="empty-text">有问题随时探索</text>
+			<text class="empty-sub-text">南开百科随时为您解答</text>
+		</view>
+	</view>
+</view>

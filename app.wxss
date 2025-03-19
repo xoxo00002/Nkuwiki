@@ -1,0 +1,54 @@
+/**app.wxss**/
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 200rpx 0;
+  box-sizing: border-box;
+} 
+
+/* 添加以下样式来控制底部导航栏图标大小 */
+.tab-bar-icon {
+  width: 48rpx;
+  height: 48rpx;
+} 
+
+/* 通用图标样式基础类 */
+.icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 搜索相关图标样式 */
+.search-icon, .voice-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 分类导航图标样式 */
+.category-icon {
+  width: 80rpx;
+  height: 80rpx;
+}
+
+/* 功能按钮图标样式 */
+.refresh-icon, .source-icon, .recommend-icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+/* 结果标题图标 */
+.result-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 10rpx;
+}
+
+/* 结果操作图标 */
+.action-icon {
+  width: 40rpx;
+  height: 40rpx; 
+  margin-right: 8rpx;
+}

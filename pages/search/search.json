@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "搜索",
+  "usingComponents": {
+    "towxml": "/wxcomponents/towxml/towxml"
+  }
+}
