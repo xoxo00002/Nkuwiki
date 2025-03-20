@@ -59,15 +59,12 @@ async function toggleLike(openid, postId) {
     db.collection("notification").doc(postQuery.data[0].authorOpenId).get()
         .then(async res => {
           for(let i = 0; i<res.data.posts.length; i++) {
-            if (res.data.posts[i].postId === postId/* && res.data._id !== cloud.getWXContext().OPENID*/) {
+            if (res.data.posts[i].postId === postId && res.data._id !== cloud.getWXContext().OPENID) {
               let users = {
                 openid: openid,
                 likeTime: new Date().getTime(),
                 postTitle: postQuery.data[0].title
               }
-              //用if代替下边的三目运算符
-              //for取得openid
-              //明天再写
               if (hasLiked) {
                 for (let j = 0; j < res.data.posts[i].likesUsers.length; j++) {
                   await db.collection("notification").where({

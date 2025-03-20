@@ -41,18 +41,22 @@ Page({
                         for (let j = res.data.posts[i].likesUsers.length - 1; j >= 0; j--) {
                             if(res.data.posts[i].likesUsers[j]!=null) {
                                 this.data.like.likesUsers.push(res.data.posts[i].likesUsers[j]);
+                                this.data.favourite.favouriteUsers.push(res.data.posts[i].favouriteUsers[j]);
                                 this.setData({
-                                    [`like.likesUsers`]: this.data.like.likesUsers
+                                    [`like.likesUsers`]: this.data.like.likesUsers,
+                                    [`favourite.favouriteUsers`]: this.data.favourite.favouriteUsers
                                 });
                             }
                         }
                     }
 
                     this.setData({
-                        [`like.likesUsers`]: this.data.like.likesUsers.sort((a, b) => b.likeTime - a.likeTime)
+                        [`like.likesUsers`]: this.data.like.likesUsers.sort((a, b) => b.likeTime - a.likeTime),
+                        [`favourite.favouriteUsers`]: this.data.favourite.favouriteUsers.sort((a, b) => a.favouriteTime - a.favouriteTime)
                     });
 
                     console.log(this.data.like.likesUsers);
+                    console.log(this.data.favourite.favouriteUsers);
 
                     for (let i = 0; i < this.data.like.likesUsers.length; i++) {
                         await wx.cloud.database().collection("users").where({
@@ -71,6 +75,26 @@ Page({
                                     [`like.likesUsersInfo`]: this.data.like.likesUsersInfo
                                 });
                                 console.log(this.data.like.likesUsersInfo);
+                            })
+                    }
+
+                    for (let i = 0; i < this.data.favourite.favouriteUsers.length; i++) {
+                        await wx.cloud.database().collection("users").where({
+                            openid: this.data.favourite.favouriteUsers[i].openid
+                        }).get()
+                            .then(result => {
+                                const date = new Date(this.data.favourite.favouriteUsers[i].favouriteTime);  // 参数需要毫秒数，所以这里将秒数乘于 1000
+                                let info = {
+                                    avatar: result.data[0].avatarUrl,
+                                    name: result.data[0].nickName,
+                                    time: util.formatRelativeTime(date),
+                                    postTitle: this.data.favourite.favouriteUsers[i].postTitle
+                                };
+                                this.data.favourite.favouriteUsersInfo.push(info);
+                                this.setData({
+                                    [`favourite.favouriteUsersInfo`]: this.data.favourite.favouriteUsersInfo
+                                });
+                                console.log(this.data.favourite.favouriteUsersInfo);
                             })
                     }
 

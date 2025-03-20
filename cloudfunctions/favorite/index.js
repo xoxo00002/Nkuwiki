@@ -52,6 +52,47 @@ async function toggleFavorite(openid, postId) {
       }
     });
 
+    //更新notification的favourite页
+    db.collection("notification").doc(postQuery.data[0].authorOpenId).get()
+        .then(async res => {
+          for(let i = 0; i<res.data.posts.length; i++) {
+            if (res.data.posts[i].postId === postId && res.data._id !== cloud.getWXContext().OPENID) {
+              let users = {
+                openid: openid,
+                favouriteTime: new Date().getTime(),
+                postTitle: postQuery.data[0].title
+              }
+              if (hasFavorited) {
+                for (let j = 0; j < res.data.posts[i].favoriteUsers.length; j++) {
+                  await db.collection("notification").where({
+                    [`posts.${i}.favouriteUsers.${j}.openid`]: openid
+                  }).update({
+                    data: {
+                      [`posts.${i}.favouriteUsers.${j}`]: _.remove()
+                    }
+                  });
+                  /*await db.collection("notification").doc(postQuery.data[0].authorOpenId).update({
+                    data: {
+                      isRead: true
+                    }
+                  });*/
+                }
+              }
+              else{
+                await db.collection("notification").doc(postQuery.data[0].authorOpenId).update({
+                  data:{
+                    isRead: false,
+                    [`posts.${i}.favouriteUsers`]: _.push(users),
+                  }
+                });
+              }
+            }
+          }
+        })
+        .catch(err => {
+          console.log("更新收藏人员openid失败")
+        });
+
     return {
       success: true,
       hasFavorited: !hasFavorited,
