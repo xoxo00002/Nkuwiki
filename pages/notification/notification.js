@@ -1,11 +1,19 @@
 const util = require("../../utils/util");
 Page({
     data:{
-        likesUsers:[],
-        favouriteUsers: [],
-        comment: [],
-        likesUsersInfo:[],
-        likesUsersName:[]
+        activeTab: "like",
+        like:{
+            likesUsers:[],
+            likesUsersInfo:[]
+        },
+        favourite: {
+            favouriteUsers: [],
+            favouriteUsersInfo: []
+        },
+        comments:{
+            commentsUsers: [],
+            commentsUsersInfo: []
+        }
     },
 
     async loadNotification(){
@@ -22,14 +30,6 @@ Page({
                 console.log("获取用户id失败");
             }
 
-            /*wx.cloud.database().collection("notification").doc(openId).update({
-                data: {
-                    isRead: true
-                },
-                success: function (res){
-                    console.log(res.data);
-                }
-            });*/
         }catch(err){
             console.log("加载notification失败");
         }
@@ -40,37 +40,37 @@ Page({
                     for (let i = res.data.posts.length - 1; i >= 0; i--) {
                         for (let j = res.data.posts[i].likesUsers.length - 1; j >= 0; j--) {
                             if(res.data.posts[i].likesUsers[j]!=null) {
-                                this.data.likesUsers.push(res.data.posts[i].likesUsers[j]);
+                                this.data.like.likesUsers.push(res.data.posts[i].likesUsers[j]);
                                 this.setData({
-                                    likesUsers: this.data.likesUsers
+                                    [`like.likesUsers`]: this.data.like.likesUsers
                                 });
                             }
                         }
                     }
 
                     this.setData({
-                        likesUsers: this.data.likesUsers.sort((a, b) => b.likeTime - a.likeTime)
+                        [`like.likesUsers`]: this.data.like.likesUsers.sort((a, b) => b.likeTime - a.likeTime)
                     });
 
-                    console.log(this.data.likesUsers);
+                    console.log(this.data.like.likesUsers);
 
-                    for (let i = 0; i < this.data.likesUsers.length; i++) {
+                    for (let i = 0; i < this.data.like.likesUsers.length; i++) {
                         await wx.cloud.database().collection("users").where({
-                            openid: this.data.likesUsers[i].openid
+                            openid: this.data.like.likesUsers[i].openid
                         }).get()
                             .then(result => {
-                                const date = new Date(this.data.likesUsers[i].likeTime);  // 参数需要毫秒数，所以这里将秒数乘于 1000
+                                const date = new Date(this.data.like.likesUsers[i].likeTime);  // 参数需要毫秒数，所以这里将秒数乘于 1000
                                 let info = {
                                     avatar: result.data[0].avatarUrl,
                                     name: result.data[0].nickName,
                                     time: util.formatRelativeTime(date),
-                                    postTitle: this.data.likesUsers[i].postTitle
+                                    postTitle: this.data.like.likesUsers[i].postTitle
                                 };
-                                this.data.likesUsersInfo.push(info);
+                                this.data.like.likesUsersInfo.push(info);
                                 this.setData({
-                                    likesUsersInfo: this.data.likesUsersInfo
+                                    [`like.likesUsersInfo`]: this.data.like.likesUsersInfo
                                 });
-                                console.log(this.data.likesUsersInfo);
+                                console.log(this.data.like.likesUsersInfo);
                             })
                     }
 
@@ -82,24 +82,6 @@ Page({
             console.log("失败");
         }
 
-    },
-
-    //拉取用户头像
-    getLikesUsersAvatar(){
-      try{
-            for (let i=0; i<this.data.likesUsers.length; i++) {
-                wx.cloud.database().collection("users").where({
-                    openid: this.data.likesUsers[i]
-                }).get(res => {
-                    this.data.likesUsersAvatar.push(res.data.avatarUrl);
-                    this.setData({
-                        likesUsersAvatar: this.data.likesUsersAvatar
-                    });
-                })
-            }
-        }catch(err){
-            console.log("失败");
-        }
     },
 
     onLoad() {
@@ -127,6 +109,13 @@ Page({
                 console.log(res.data);
             }
         });
+    },
+
+    switchTab(event){
+        this.setData({
+            activeTab: event.target.dataset.tab
+        });
+        console.log(this.data.activeTab)
     }
 
 })

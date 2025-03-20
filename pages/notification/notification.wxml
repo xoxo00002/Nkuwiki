@@ -1,20 +1,10 @@
-<!--
-<view class="container" wx:for="{{likesUsersInfo}}">
-    <image src="{{item.avatar}}"></image>
-    <view>
-        <view>{{item.name}}赞了你的帖子</view>
-        <view>{{item.time}}毫秒前</view>
-    </view>
-</view>
---->
-
 <view class="notification-container">
   <!-- 顶部标签栏 -->
   <view class="tab-bar">
     <view class="tab-item {{activeTab === 'like' ? 'active' : ''}}" bindtap="switchTab" data-tab="like">
       点赞
     </view>
-    <view class="tab-item {{activeTab === 'collect' ? 'active' : ''}}" bindtap="switchTab" data-tab="collect">
+    <view class="tab-item {{activeTab === 'favourite' ? 'active' : ''}}" bindtap="switchTab" data-tab="favourite">
       收藏
     </view>
     <view class="tab-item {{activeTab === 'comment' ? 'active' : ''}}" bindtap="switchTab" data-tab="comment">
@@ -24,26 +14,72 @@
 
   <!-- 消息列表 -->
   <scroll-view class="notification-list" scroll-y="true">
-    <block wx:if="{{likesUsersInfo.length > 0}}">
-      <view class="notification-item" wx:for="{{likesUsersInfo}}" wx:key="id" bindtap="goToPost" data-post-id="{{item.postId}}">
-        <view class="notification-avatar">
-          <image class="avatar" src="{{item.avatar || '/assets/icons/default-avatar.png'}}"></image>
-        </view>
-        <view class="notification-content">
-          <view class="notification-header">
-            <text class="username">{{item.name}}</text>
-            <text class="time">{{item.time}}</text>
+    <block wx:if="{{activeTab==='like'}}">
+      <block wx:if="{{like.likesUsersInfo.length > 0}}">
+        <view class="notification-item" wx:for="{{like.likesUsersInfo}}" wx:key="id" bindtap="goToPost" data-post-id="{{item.postId}}">
+          <view class="notification-avatar">
+            <image class="avatar" src="{{item.avatar || '/assets/icons/default-avatar.png'}}"></image>
           </view>
-          <view class="notification-text">
-            在「{{item.postTitle}}」这条帖子{{item.action}}
+          <view class="notification-content">
+            <view class="notification-header">
+              <text class="username">{{item.name}}</text>
+              <text class="time">{{item.time}}</text>
+            </view>
+            <view class="notification-text">
+              在「{{item.postTitle}}」这条帖子{{item.action}}
+            </view>
           </view>
         </view>
+      </block>
+      <view wx:else class="empty-state">
+        <image class="empty-icon" src="/assets/icons/empty.png"></image>
+        <text class="empty-text">暂无{{activeTab}}消息</text>
       </view>
     </block>
-    <view wx:else class="empty-state">
-      <image class="empty-icon" src="/assets/icons/empty.png"></image>
-      <text class="empty-text">暂无{{activeTabText}}消息</text>
-    </view>
+    <block wx:if="{{activeTab==='favourite'}}">
+      <block wx:if="{{favourite.favouriteUsersInfo.length > 0}}">
+        <view class="notification-item" wx:for="{{favourite.favouriteUsersInfo}}" wx:key="id" bindtap="goToPost" data-post-id="{{item.postId}}">
+          <view class="notification-avatar">
+            <image class="avatar" src="{{item.avatar || '/assets/icons/default-avatar.png'}}"></image>
+          </view>
+          <view class="notification-content">
+            <view class="notification-header">
+              <text class="username">{{item.name}}</text>
+              <text class="time">{{item.time}}</text>
+            </view>
+            <view class="notification-text">
+              在「{{item.postTitle}}」这条帖子{{item.action}}
+            </view>
+          </view>
+        </view>
+      </block>
+      <view wx:else class="empty-state">
+        <image class="empty-icon" src="/assets/icons/empty.png"></image>
+        <text class="empty-text">暂无{{activeTab}}消息</text>
+      </view>
+    </block>
+    <block wx:if="{{activeTab==='comment'}}">
+      <block wx:if="{{comments.commentsUsersInfo.length > 0}}">
+        <view class="notification-item" wx:for="{{comments.commentsUsersInfo}}" wx:key="id" bindtap="goToPost" data-post-id="{{item.postId}}">
+          <view class="notification-avatar">
+            <image class="avatar" src="{{item.avatar || '/assets/icons/default-avatar.png'}}"></image>
+          </view>
+          <view class="notification-content">
+            <view class="notification-header">
+              <text class="username">{{item.name}}</text>
+              <text class="time">{{item.time}}</text>
+            </view>
+            <view class="notification-text">
+              在「{{item.postTitle}}」这条帖子{{item.action}}
+            </view>
+          </view>
+        </view>
+      </block>
+      <view wx:else class="empty-state">
+        <image class="empty-icon" src="/assets/icons/empty.png"></image>
+        <text class="empty-text">暂无{{activeTab}}消息</text>
+      </view>
+    </block>
   </scroll-view>
 
   <!-- 全部标记已读按钮 -->
