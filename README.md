@@ -49,7 +49,7 @@ project
 ├── jsconfig.json # JavaScript配置文件
 └── .cursorrules # Cursor IDE配置文件
 
-```text
+```
 
 ## 重要文件说明
 
