@@ -18,14 +18,15 @@ function parseMarkdown(markdown) {
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     
-    // 处理![title]()格式为标题超链接
+    // 处理链接和图片，提升优先级
     .replace(/!\[(.*?)\]\((.*?)\)/g, '<navigator url="/pages/webview/webview?url=$2" class="md-link">$1</navigator>')
+    .replace(/\[(.*?)\]\((.*?)\)/g, '<navigator url="/pages/webview/webview?url=$2" class="md-link">$1</navigator>')
+    
+    // 处理数字编号列表，改进匹配方式
+    .replace(/^(\d+)[.、：:]\s*(.*?)$/gm, '<view class="md-li"><text class="md-li-num">$1.</text> $2</view>')
     
     // 无序列表
-    .replace(/^\s*[-*+]\s+(.*?)$/gm, '<view class="md-li">• $1</view>')
-    
-    // 有序列表 
-    .replace(/^\s*(\d+)\.\s+(.*?)$/gm, '<view class="md-li"><text class="md-li-num">$1.</text> $2</view>')
+    .replace(/^\s*[-*+•]\s+(.*?)$/gm, '<view class="md-li">• $1</view>')
     
     // 代码块
     .replace(/```([\s\S]*?)```/g, '<view class="md-code">$1</view>')
@@ -40,7 +41,7 @@ function parseMarkdown(markdown) {
     .replace(/^---$/gm, '<view class="md-hr"></view>')
     
     // 段落
-    .replace(/\n\n/g, '</view><view class="md-p">')
+    .replace(/\n\n/g, '</view><view class="md-p">');
   
   // 确保段落包裹
   html = '<view class="md-p">' + html + '</view>';
@@ -72,6 +73,77 @@ Page({
     richTextContent: null  // 存储美化后的文本内容
   },
 
+  // 简单高效的Markdown转HTML函数
+  simpleMarkdownToHtml: function(markdown) {
+    if (!markdown) return '<view class="md-p"></view>';
+    
+    // 预处理换行和空行
+    let text = markdown.trim().replace(/\r\n/g, '\n');
+    
+    // 添加结束标记，以便于正则匹配
+    text += '\n';
+    
+    // 识别数字编号列表
+    text = text.replace(/^(\d+)[.、：:]\s*(.*?)$/gm, 
+      '<view class="md-li"><text class="md-li-num">$1.</text> $2</view>');
+    
+    // 识别无序列表
+    text = text.replace(/^\s*[-*+•]\s+(.*?)$/gm, 
+      '<view class="md-li">• $1</view>');
+    
+    // 处理链接 [文本](链接)
+    text = text.replace(/\[(.*?)\]\((.*?)\)/g, 
+      '<navigator url="/pages/webview/webview?url=$2" class="md-link">$1</navigator>');
+    
+    // 处理标题 - 从h3到h1
+    text = text.replace(/^### (.*?)$/gm, '<view class="md-h3">$1</view>');
+    text = text.replace(/^## (.*?)$/gm, '<view class="md-h2">$1</view>');
+    text = text.replace(/^# (.*?)$/gm, '<view class="md-h1">$1</view>');
+    
+    // 处理粗体和斜体
+    text = text.replace(/\*\*(.*?)\*\*/g, '<text class="md-bold">$1</text>');
+    text = text.replace(/\*(.*?)\*/g, '<text class="md-italic">$1</text>');
+    
+    // 处理单行代码
+    text = text.replace(/`(.*?)`/g, '<text class="md-code-inline">$1</text>');
+    
+    // 处理代码块
+    text = text.replace(/```([\s\S]*?)```/g, '<view class="md-code-block">$1</view>');
+    
+    // 处理引用
+    text = text.replace(/^> (.*?)$/gm, '<view class="md-quote">$1</view>');
+    
+    // 处理分隔线
+    text = text.replace(/^-{3,}$/gm, '<view class="md-hr"></view>');
+    
+    // 将剩余的文本行转换为段落
+    const paragraphs = [];
+    let currentP = '';
+    
+    text.split('\n').forEach(line => {
+      if (line.trim() === '') {
+        if (currentP) {
+          paragraphs.push(`<view class="md-p">${currentP}</view>`);
+          currentP = '';
+        }
+      } else if (!line.startsWith('<view') && !line.startsWith('<text') && !line.startsWith('<navigator')) {
+        currentP += (currentP ? ' ' : '') + line;
+      } else {
+        if (currentP) {
+          paragraphs.push(`<view class="md-p">${currentP}</view>`);
+          currentP = '';
+        }
+        paragraphs.push(line);
+      }
+    });
+    
+    if (currentP) {
+      paragraphs.push(`<view class="md-p">${currentP}</view>`);
+    }
+    
+    return paragraphs.join('');
+  },
+
   // 处理输入框变化
   onInputChange(e) {
     this.setData({
@@ -85,17 +157,20 @@ Page({
       usePlainText: !this.data.usePlainText
     }, () => {
       // 如果已有内容，重新渲染
-      if (this.data.fullResponse) {
+      if (this.data.textContent) {
         if (this.data.usePlainText) {
           this.setData({
+            richTextContent: null, // 清空富文本内容
             markdownHtml: '' // 清空markdown以便显示纯文本
           });
         } else {
-          // 重新生成markdown
-          const markdownHtml = this.simpleMarkdownToHtml(this.data.fullResponse);
+          // 重新生成markdown并更新富文本
+          const markdownHtml = this.simpleMarkdownToHtml(this.data.textContent);
           this.setData({
             markdownHtml: markdownHtml
           });
+          // 同时更新富文本渲染
+          this.formatRichTextContent(this.data.textContent);
         }
       }
       
@@ -147,6 +222,7 @@ Page({
 
     this.setData({
       textContent: '',  // 清空之前的内容
+      richTextContent: null, // 清空富文本内容
       loading: true,
       isStreaming: false // 不立即显示流式状态，避免出现"正在生成"
     });
@@ -170,26 +246,33 @@ Page({
       let linkId = 0;
       
       // 临时替换链接为占位符
-      processedText = processedText.replace(/(\d+)\.\s*(.*?)[:：]\s*(https?:\/\/[^\s<]+)|^(.*?)[:：]\s*(https?:\/\/[^\s<]+)$|(?<![(\[])(https?:\/\/[^\s<]+)(?![)\]])/gm, 
-        (match, num, title, url1, title2, url2, url3) => {
+      processedText = processedText.replace(/(\d+)[.、：:]\s*(.*?)[:：]\s*(https?:\/\/[^\s<]+)|(\d+)[.、：:]\s*(.*?)$|^(.*?)[:：]\s*(https?:\/\/[^\s<]+)$|(?<![(\[])(https?:\/\/[^\s<]+)(?![)\]])/gm, 
+        (match, num, title, url1, num2, title2, title3, url2, url3) => {
           const placeholder = `__LINK_${linkId}__`;
           if (num && title && url1) {
-            // 数字编号的链接
+            // 数字编号的链接: "1. 标题: https://..."
             links.push({
-              type: 'numbered',
+              type: 'numbered_url',
               num,
               title: title.trim(),
               url: url1
             });
-          } else if (title2 && url2) {
-            // 标题: 链接格式
+          } else if (num2 && title2) {
+            // 数字编号无链接: "1. 标题"
+            links.push({
+              type: 'numbered',
+              num: num2,
+              title: title2.trim()
+            });
+          } else if (title3 && url2) {
+            // 标题: 链接格式 "标题: https://..."
             links.push({
               type: 'titled',
-              title: title2.trim(),
+              title: title3.trim(),
               url: url2
             });
           } else if (url3) {
-            // 单独的链接
+            // 单独的链接 "https://..."
             links.push({
               type: 'plain',
               url: url3
@@ -203,12 +286,15 @@ Page({
       // 将链接还原为Markdown格式
       links.forEach((link, index) => {
         const placeholder = `__LINK_${index}__`;
-        if (link.type === 'numbered') {
+        if (link.type === 'numbered_url') {
           processedText = processedText.replace(placeholder, 
-            `${link.num}. ![${link.title}](${link.url})`);
+            `${link.num}. [${link.title}](${link.url})`);
+        } else if (link.type === 'numbered') {
+          processedText = processedText.replace(placeholder, 
+            `${link.num}. ${link.title}`);
         } else if (link.type === 'titled') {
           processedText = processedText.replace(placeholder, 
-            `![${link.title}](${link.url})`);
+            `[${link.title}](${link.url})`);
         } else {
           processedText = processedText.replace(placeholder, 
             `[${link.url}](${link.url})`);
@@ -288,11 +374,16 @@ Page({
   startSimpleStream: function(query) {
     const that = this;
     
+    // 获取用户微信ID
+    const userInfo = wx.getStorageSync('userInfo') || {};
+    const openid = userInfo.openid || wx.getStorageSync('openid');
+    
     // 构建请求数据
     const requestData = {
       query: query,
       stream: true,  // 开启流式响应
-      format: 'text' // 直接请求纯文本
+      format: 'text', // 直接请求纯文本
+      user_id: openid || 'default_user' // 使用用户的微信ID，如果没有则使用默认值
     };
 
     console.log('请求参数:', requestData);
@@ -346,16 +437,19 @@ Page({
     // 创建一个变量跟踪是否收到至少一个数据块
     let receivedFirstChunk = false;
     let responseComplete = false;
+    let totalChunks = 0;
     
     // 监听数据接收事件
     requestTask.onChunkReceived(function(res) {
       try {
-        // 第一次收到数据时，设置isStreaming为true
+        totalChunks++;
+        
+        // 如果是第一个数据块，关闭loading，但不显示isStreaming状态
+        // 等待累积一定量的内容后再显示，避免"正在生成"的闪烁
         if (!receivedFirstChunk) {
           receivedFirstChunk = true;
           that.setData({ 
-            isStreaming: true,
-            loading: false  // 收到第一个数据块时就关闭loading
+            loading: false
           });
         }
         
@@ -433,13 +527,29 @@ Page({
           // 确保整个文本中不会有多余的空行
           const processedText = accumulatedText.replace(/\n\s*\n/g, '\n').trim();
           
+          // 设置文本内容
           that.setData({
             textContent: processedText
           });
           
-          // 使用towxml处理富文本
+          // 当累积足够的内容或收到足够多的数据块时，才显示isStreaming
+          // 这样可以避免"正在生成"的短暂显示
+          if (totalChunks > 3 && processedText.length > 20 && !that.data.isStreaming) {
+            that.setData({
+              isStreaming: true
+            });
+          }
+          
+          // 处理富文本显示
           if (!that.data.usePlainText) {
+            // 使用towxml处理富文本
             that.formatRichTextContent(processedText);
+            
+            // 同时使用自定义Markdown渲染器生成HTML
+            const markdownHtml = that.simpleMarkdownToHtml(processedText);
+            that.setData({
+              markdownHtml: markdownHtml
+            });
           }
         }
       } catch (error) {
