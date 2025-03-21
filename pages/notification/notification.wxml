@@ -26,7 +26,7 @@
               <text class="time">{{item.time}}</text>
             </view>
             <view class="notification-text">
-              在「{{item.postTitle}}」这条帖子{{item.action}}
+              {{action}}了你的「{{item.postTitle}}」这条帖子
             </view>
           </view>
         </view>
@@ -48,7 +48,7 @@
               <text class="time">{{item.time}}</text>
             </view>
             <view class="notification-text">
-              在「{{item.postTitle}}」这条帖子{{item.action}}
+              {{action}}了你的「{{item.postTitle}}」这条帖子
             </view>
           </view>
         </view>
@@ -70,7 +70,7 @@
               <text class="time">{{item.time}}</text>
             </view>
             <view class="notification-text">
-              在「{{item.postTitle}}」这条帖子{{item.action}}
+              {{action}}了你的「{{item.postTitle}}」这条帖子并说了"{{item.content}}"
             </view>
           </view>
         </view>

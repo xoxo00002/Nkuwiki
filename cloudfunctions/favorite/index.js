@@ -63,7 +63,7 @@ async function toggleFavorite(openid, postId) {
                 postTitle: postQuery.data[0].title
               }
               if (hasFavorited) {
-                for (let j = 0; j < res.data.posts[i].favoriteUsers.length; j++) {
+                for (let j = 0; j < res.data.posts[i].favouriteUsers.length; j++) {
                   await db.collection("notification").where({
                     [`posts.${i}.favouriteUsers.${j}.openid`]: openid
                   }).update({
