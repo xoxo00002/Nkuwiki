@@ -1652,7 +1652,7 @@
 ### 7.1 与Agent对话
 
 **接口**：`POST /api/agent/chat`  
-**描述**：与AI智能体进行对话  
+**描述**：与AI智能体进行对话，支持普通对话和流式返回  
 **请求体**：
 
 ```json
@@ -1668,7 +1668,14 @@
 }
 ```
 
-**响应**：
+**参数说明**：
+- `query` - 必填，用户当前的问题
+- `messages` - 可选，对话历史消息列表，按时间顺序排列
+- `stream` - 可选，是否使用流式返回，默认为 false
+- `format` - 可选，返回格式，支持 "text"、"markdown" 或 "html"，默认为 "markdown"
+- `openid` - 可选，用户标识符
+
+**普通响应**（`stream=false`）：
 
 ```json
 {
@@ -1695,6 +1702,52 @@
   "timestamp": "2023-01-01 12:00:00"
 }
 ```
+
+**流式响应**（`stream=true`）：
+
+当 `stream` 参数设置为 `true` 时，服务器将返回 `text/event-stream` 格式的数据流，客户端需要按照 Server-Sent Events (SSE) 的标准解析响应。每个事件以 `data: ` 开头，最后以 `data: [DONE]` 标记结束。
+
+```
+data: 南开
+data: 大学
+data: 的
+data: 校训
+data: 是
+data: "
+data: 允公
+data: 允能
+data: ，
+data: 日新月异
+data: "
+data: 。
+data: 这
+data: 八个
+data: 字
+data: 出自
+data: 《
+data: 论语
+data: 》
+data: ，
+data: 体现
+data: 了
+data: 南开大学
+data: 追求
+data: 公能
+data: 日新
+data: 的
+data: 办学
+data: 理念
+data: 。
+data: [DONE]
+```
+
+客户端可以累积这些片段以重建完整响应，或实时显示打字效果。
+
+**注意**：
+1. 流式响应会考虑历史消息的上下文，但为了性能考虑，会以更高效的方式处理历史记录
+2. 流式响应不会返回知识源和推荐问题，这些信息只在非流式响应中提供
+3. 流式响应有 90 秒的超时设置，超时后会自动结束流
+4. 在出现错误时，流式响应会返回相应错误信息并结束流
 
 ### 7.2 知识库搜索
 
