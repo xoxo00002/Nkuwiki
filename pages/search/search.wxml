@@ -77,6 +77,36 @@
 					<text>{{ usePlainText ? '富文本模式' : '纯文本模式' }}</text>
 				</view>
 			</view>
+			
+			<!-- 建议问题区域 -->
+			<view class="suggested-questions" wx:if="{{ suggestedQuestions && suggestedQuestions.length > 0 }}">
+				<view class="suggest-title">相关提问：</view>
+				<view class="question-list">
+					<view 
+						class="question-item" 
+						wx:for="{{ suggestedQuestions }}" 
+						wx:key="index" 
+						bindtap="handleRecommendClick" 
+						data-question="{{ item }}">
+						{{ item }}
+					</view>
+				</view>
+			</view>
+			
+			<!-- 搜索来源 -->
+			<view class="sources-container" wx:if="{{ sources && sources.length > 0 }}">
+				<view class="sources-title">参考来源：</view>
+				<view class="sources-list">
+					<view class="source-item" wx:for="{{ sources }}" wx:key="index">
+						<view class="source-content">
+							<view class="source-type" wx:if="{{ item.type }}">{{ item.type }}</view>
+							<view class="source-title" wx:if="{{ item.title }}">{{ item.title }}</view>
+							<view class="source-preview" wx:if="{{ item.content }}">{{ item.content }}</view>
+							<view class="source-author" wx:if="{{ item.author }}">— {{ item.author }}</view>
+						</view>
+					</view>
+				</view>
+			</view>
 		</view>
 		<!-- 默认提示 -->
 		<view class="empty-state" wx:if="{{ !loading && !textContent }}">
