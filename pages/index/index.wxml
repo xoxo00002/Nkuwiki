@@ -99,11 +99,11 @@
             <text class="comment-author">{{comment.authorName}}:</text>
 
             <!-- 判断评论内容类型 -->
-            <text class="comment-content" wx:if="{{!comment.images || comment.images.length === 0}}">{{comment.content}}</text>
+            <text class="comment-content" user-select="{{true}}" wx:if="{{!comment.images || comment.images.length === 0}}">{{comment.content}}</text>
 
             <!-- 处理有图片的评论 -->
             <block wx:elif="{{comment.images && comment.images.length > 0}}">
-              <text class="comment-content">
+              <text class="comment-content" user-select="{{true}}">
                 <!-- 如果既有文字内容又有图片 -->
                 <block wx:if="{{comment.content}}">{{comment.content}}</block>
                 <!-- 添加图片标识，使用空格分隔避免方括号被解析为图片路径 -->

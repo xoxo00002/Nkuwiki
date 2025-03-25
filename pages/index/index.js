@@ -133,6 +133,23 @@ Page({
 
       // 处理帖子数据，格式化创建时间
       const processedPosts = posts.map(post => {
+        // 处理评论预览，确保评论内容中的方括号不会被误解析
+        const processedComments = (post.recent_comments || []).map(comment => {
+          const hasImage = comment.images && comment.images.length > 0;
+          // 安全处理评论内容，防止方括号被错误解析为图片
+          let content = comment.content;
+          if (content && content.includes('[')) {
+            // 替换可能导致问题的方括号文本
+            content = content.replace(/\[([^\]]*)\]/g, '「$1」');
+          }
+          
+          return {
+            ...comment,
+            content,
+            hasImage
+          };
+        });
+        
         return {
           ...post,
           _id: post.id,  // 兼容旧代码
@@ -142,14 +159,8 @@ Page({
           commentCount: post.comment_count || 0,
           likes: post.like_count || 0,
           favoriteCounts: post.favorite_count || 0,
-          // 处理评论预览
-          commentPreview: (post.recent_comments || []).map(comment => {
-            const hasImage = comment.images && comment.images.length > 0;
-            return {
-              ...comment,
-              hasImage
-            };
-          })
+          // 使用处理过的评论预览
+          commentPreview: processedComments
         };
       });
 
