@@ -23,14 +23,6 @@ project
 │   ├── login/ # 登录页
 │   └── post/ # 发帖页
 │
-├── api/ # API接口封装
-│   ├── agent_api.md # Agent API文档
-│   ├── mysql_api.md # MySQL API文档
-│   └── README.md # API说明文档
-│
-├── assets/ # 静态资源
-│   └── icons/ # 图标文件
-│
 ├── utils/ # 工具函数
 │   ├── api/ # API模块，包含各类接口封装
 │   │   ├── index.js # API模块入口
@@ -42,20 +34,27 @@ project
 │   └── request.js # 网络请求工具
 │
 ├── cloudfunctions/ # 云函数
-│   └── login/ # 登录相关云函数
+│   ├── getOpenID/ # 获取微信用户OpenID的云函数
+│   └── uploadImage/ # 图片上传云函数
+│
+├── assets/ # 静态资源
+│   └── icons/ # 图标文件
+│
+├── wxcomponents/ # 自定义组件
 │
 ├── typings/ # TypeScript类型定义
 │
 ├── app.js # 小程序入口文件
 ├── app.json # 小程序全局配置
-├── app.wxss # 全局样式
+├── app.json.bak # 全局配置备份文件
+├── app.wxss # 全局样式文件
+├── api_docs.md # API文档
+├── jsconfig.json # JavaScript配置文件
 ├── project.config.json # 项目配置文件
 ├── project.private.config.json # 项目私有配置
 ├── sitemap.json # 小程序搜索配置
-├── jsconfig.json # JavaScript配置文件
-└── .cursorrules # Cursor IDE配置文件
-
-```text
+└── .gitignore # Git忽略文件
+```
 
 ## 重要文件说明
 
@@ -163,7 +162,7 @@ project
 
 ### API文档
 
-完整的API文档位于项目根目录的 `docs/api_docs.md` 文件中，包含了所有可用的接口、参数说明和返回格式。API主要分为两类：
+完整的API文档位于项目根目录的 `api_docs.md` 文件中，包含了所有可用的接口、参数说明和返回格式。API主要分为两类：
 
 1. 微信小程序API：以 `/api/wxapp/*` 为前缀，供小程序前端调用
 2. Agent智能体API：以 `/api/agent/*` 为前缀，提供AI聊天和知识检索功能
@@ -312,7 +311,7 @@ try {
 
 如需新接口，请遵循以下步骤：
 
-1. 查阅 `docs/api_docs.md` 了解接口规范。
+1. 查阅 `api_docs.md` 了解接口规范。
 2. 如果自己能写后端api就自己写。
 3. 如果自己不能写，请向后端负责人提issue，包括详细的请求方式、路径、参数、查询参数、返回格式等等。
 4. 完善接口文档。
