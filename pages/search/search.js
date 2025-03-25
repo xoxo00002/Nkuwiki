@@ -226,13 +226,23 @@ Page({
       richTextContent: null, // 清空富文本内容
       loading: true,
       isStreaming: false, // 不立即显示流式状态
-      sources: [] // 清空之前的来源
+      sources: [], // 清空之前的来源
+      suggestedQuestions: [], // 清空建议问题
+      markdownHtml: '' // 确保清空markdown HTML
     });
 
     console.log(`开始搜索: ${searchValue}`);
     
-    // 使用新API发起流式搜索请求
-    this.startSimpleStream(searchValue);
+    // 根据配置决定是否使用流式响应
+    const useStream = true; // 可以从配置中读取，这里默认使用流式响应
+    
+    if (useStream) {
+      // 使用流式响应搜索
+      this.startSimpleStream(searchValue);
+    } else {
+      // 使用普通搜索
+      this.startNormalSearch(searchValue);
+    }
     
     // 添加到搜索历史
     this.addToSearchHistory(searchValue);
@@ -437,9 +447,10 @@ Page({
     
     // 初始化累积的响应文本
     let accumulatedText = '';
-    let isFirstChunk = true;
+    let buffer = ''; // 缓冲区，用于处理不完整的数据行
     let responseTimer = null;
     let hasFinalResponse = false;
+    let pendingBytes = []; // 用于存储可能被截断的UTF-8字节
     
     // 设置超时处理
     responseTimer = setTimeout(() => {
@@ -450,10 +461,7 @@ Page({
           isStreaming: false,
           textContent: that.data.textContent || '请求超时，请重试'
         });
-        wx.showToast({
-          title: '请求超时',
-          icon: 'none'
-        });
+        // 避免使用wx.showToast，以免与页面上的加载指示器冲突
       }
     }, 30000); // 30秒超时
     
@@ -492,10 +500,7 @@ Page({
           console.error('错误详情:', err.errMsg);
         }
         
-        wx.showToast({
-          title: errorMsg,
-          icon: 'none'
-        });
+        // 不使用showToast，避免冲突
         that.setData({ 
           loading: false, 
           isStreaming: false,
@@ -515,7 +520,6 @@ Page({
     
     // 创建一个变量跟踪是否收到至少一个数据块
     let receivedFirstChunk = false;
-    let responseComplete = false;
     let totalChunks = 0;
     
     // 监听数据接收事件
@@ -523,183 +527,140 @@ Page({
       try {
         totalChunks++;
         
-        // 如果是第一个数据块，关闭loading，但不显示isStreaming状态
+        // 如果是第一个数据块，关闭loading，设置isStreaming状态
         if (!receivedFirstChunk) {
           receivedFirstChunk = true;
           that.setData({ 
-            loading: false
+            loading: false,
+            isStreaming: true
           });
         }
         
         // 将二进制数据转换为字符串
-        let text;
+        let chunk;
         if (isDevTool) {
-          text = new TextDecoder('utf-8').decode(new Uint8Array(res.data));
+          // 开发工具支持TextDecoder
+          chunk = new TextDecoder('utf-8').decode(new Uint8Array(res.data));
         } else {
-          text = String.fromCharCode.apply(null, new Uint8Array(res.data));
-        }
-        
-        // 检查是否是最后一个数据块
-        if (text.includes('"done":true') || text.includes('"done": true')) {
-          responseComplete = true;
-          hasFinalResponse = true;
-          clearTimeout(responseTimer);
-          that.setData({ 
-            isStreaming: false,
-            loading: false
-          });
-          
-          // 保存对话记录
-          if (accumulatedText && accumulatedText.trim()) {
-            that.saveChatHistory(query, accumulatedText.trim(), that.data.sources || []);
-          }
-          
-          return;
-        }
-        
-        // 处理数据
-        let content = '';
-        let sources = [];
-        
-        // 处理SSE格式
-        if (text.includes('data:')) {
-          const matches = text.match(/data:\s*({.+?})/g) || [];
-          for (const match of matches) {
-            try {
-              const jsonStr = match.replace(/^data:\s*/, '');
-              const data = JSON.parse(jsonStr);
-              
-              // 检查是否有标准响应结构
-              if (data.response !== undefined) {
-                content += data.response;
-              } else if (data.content !== undefined) {
-                // 兼容旧格式
-                content += data.content;
-              }
-              
-              // 检查是否有来源信息
-              if (data.sources && Array.isArray(data.sources)) {
-                sources = [...sources, ...data.sources];
-              }
-            } catch (e) {
-              console.warn('解析数据失败:', e);
-              console.warn('原始数据:', match);
-            }
-          }
-        } else if (text.startsWith('{') && text.endsWith('}')) {
+          // 原来的方法不能正确处理UTF-8编码的中文
+          // chunk = String.fromCharCode.apply(null, new Uint8Array(res.data));
+          // 统一使用TextDecoder处理
           try {
-            const data = JSON.parse(text);
+            // 处理可能被截断的UTF-8字符
+            const currentBytes = new Uint8Array(res.data);
             
-            // 检查是否包含标准响应字段
-            if (data.code !== undefined && data.data !== undefined) {
-              // 标准API响应格式
-              if (data.code !== 200) {
-                // 记录API错误
-                console.error('API返回错误:', data.code, data.message);
-                
-                // 显示错误消息
-                that.setData({
-                  textContent: `请求出错: ${data.message || '未知错误'} (${data.code})`,
-                  isStreaming: false,
-                  loading: false
-                });
-                
-                hasFinalResponse = true;
-                clearTimeout(responseTimer);
-                return;
-              }
-              
-              if (data.data.response !== undefined) {
-                content += data.data.response;
-              }
-              if (data.data.sources && Array.isArray(data.data.sources)) {
-                sources = [...sources, ...data.data.sources];
-              }
-              
-              // 检查是否有建议问题
-              if (data.data.suggested_questions && Array.isArray(data.data.suggested_questions)) {
-                that.setData({
-                  suggestedQuestions: data.data.suggested_questions
-                });
-              }
-            } else if (data.response !== undefined) {
-              // 直接包含response字段
-              content += data.response;
-              if (data.sources && Array.isArray(data.sources)) {
-                sources = [...sources, ...data.sources];
-              }
-              
-              // 检查是否有建议问题
-              if (data.suggested_questions && Array.isArray(data.suggested_questions)) {
-                that.setData({
-                  suggestedQuestions: data.suggested_questions
-                });
-              }
-            } else if (data.content !== undefined) {
-              // 兼容旧格式
-              content += data.content;
+            // 如果有挂起的字节，合并处理
+            if (pendingBytes.length > 0) {
+              const combinedBytes = new Uint8Array(pendingBytes.length + currentBytes.length);
+              combinedBytes.set(pendingBytes);
+              combinedBytes.set(currentBytes, pendingBytes.length);
+              pendingBytes = []; // 清空挂起字节
+              chunk = new TextDecoder('utf-8').decode(combinedBytes);
             } else {
-              // 无法识别的格式，记录日志
-              console.warn('未知的响应格式:', text);
+              chunk = new TextDecoder('utf-8').decode(currentBytes);
             }
           } catch (e) {
-            console.warn('解析JSON失败:', e);
-            // 记录原始文本以便调试
-            console.warn('原始文本:', text.substring(0, 200) + (text.length > 200 ? '...' : ''));
+            console.error('TextDecoder解码失败，尝试备用方法:', e);
+            // 备用方法
+            const bytes = new Uint8Array(res.data);
+            chunk = '';
+            // 处理UTF-8编码
+            for (let i = 0; i < bytes.length; i++) {
+              chunk += '%' + bytes[i].toString(16).padStart(2, '0');
+            }
+            try {
+              chunk = decodeURIComponent(chunk);
+            } catch (e) {
+              console.error('备用解码也失败:', e);
+              // 如果解码失败，至少返回原始数据，避免请求中断
+              chunk = String.fromCharCode.apply(null, bytes);
+            }
           }
-        } else {
-          content = text;
         }
         
-        // 更新累积的文本
-        if (content) {
-          // 处理第一个数据块的前导空行
-          if (isFirstChunk) {
-            content = content.replace(/^\s+/, '');
-            isFirstChunk = false;
-          }
-          
-          // 处理连续的空行，将多个空行替换为单个空行
-          content = content.replace(/\n\s*\n/g, '\n');
-          
-          accumulatedText += content;
-          
-          // 确保整个文本中不会有多余的空行
-          const processedText = accumulatedText.replace(/\n\s*\n/g, '\n').trim();
-          
-          // 设置文本内容
-          that.setData({
-            textContent: processedText
-          });
-          
-          // 当累积足够的内容或收到足够多的数据块时，才显示isStreaming
-          if (totalChunks > 3 && processedText.length > 20 && !that.data.isStreaming) {
-            that.setData({
-              isStreaming: true
-            });
-          }
-          
-          // 处理富文本显示
-          if (!that.data.usePlainText) {
-            // 使用towxml处理富文本
-            that.formatRichTextContent(processedText);
+        // 追加到buffer
+        buffer += chunk;
+        
+        // 处理缓冲区中的数据行
+        const lines = buffer.split('\n');
+        // 保留最后一个可能不完整的行
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.substring(6);
             
-            // 同时使用自定义Markdown渲染器生成HTML
-            const markdownHtml = that.simpleMarkdownToHtml(processedText);
+            // 检查是否是流结束标记
+            if (data === '[DONE]') {
+              console.log('流式响应结束');
+              hasFinalResponse = true;
+              clearTimeout(responseTimer);
+              that.setData({ 
+                isStreaming: false,
+                loading: false
+              });
+              
+              // 保存对话记录
+              if (accumulatedText && accumulatedText.trim()) {
+                that.saveChatHistory(query, accumulatedText.trim(), that.data.sources || []);
+              }
+              continue;
+            }
+            
+            // 添加调试信息
+            if (totalChunks <= 5) {
+              console.debug(`接收到文本片段[${totalChunks}]:`, data);
+            }
+            
+            // 添加文本片段到累积文本
+            accumulatedText += data;
+            
+            // 更新UI显示
+            const processedText = accumulatedText.trim();
             that.setData({
-              markdownHtml: markdownHtml
+              textContent: processedText
             });
+            
+            // 处理富文本显示
+            if (!that.data.usePlainText) {
+              // 使用自定义Markdown渲染器生成HTML
+              const markdownHtml = that.simpleMarkdownToHtml(processedText);
+              that.setData({
+                markdownHtml: markdownHtml
+              });
+              
+              // 格式化富文本内容
+              that.formatRichTextContent(processedText);
+            }
+          } else if (line.trim() && !line.startsWith(':')) {
+            // 处理非空行且不是SSE注释行
+            console.warn('未知格式的数据行:', line);
           }
         }
         
-        // 如果有来源信息，保存下来
-        if (sources.length > 0) {
-          that.setData({
-            sources: sources
-          });
+        // 在处理完后添加诊断信息
+        if (totalChunks % 10 === 0) {
+          console.debug(`已处理${totalChunks}个数据块，当前文本长度:${accumulatedText.length}`);
         }
       } catch (error) {
-        console.error('处理数据失败:', error);
+        console.error('处理数据失败:', error, error.stack);
+        
+        // 更详细的错误诊断
+        if (error instanceof TypeError) {
+          console.error('类型错误，可能是数据格式问题');
+        } else if (error instanceof URIError) {
+          console.error('URI编码错误，可能是解码问题');
+        }
+        
+        // 确保错误不会中断整个处理流程
+        try {
+          that.setData({
+            isStreaming: true,
+            textContent: that.data.textContent || '接收数据时出错，但会继续处理'
+          });
+        } catch (e) {
+          console.error('更新UI失败:', e);
+        }
       }
     });
   },
@@ -1168,5 +1129,150 @@ Page({
     history.unshift(query);
     this.setData({ searchHistory: history });
     wx.setStorageSync('searchHistory', history);
+  },
+
+  // 普通搜索请求（非流式）
+  startNormalSearch: function(query) {
+    const that = this;
+    
+    // 获取用户微信ID
+    const userInfo = wx.getStorageSync('userInfo') || {};
+    const openid = userInfo.openid || wx.getStorageSync('openid');
+    
+    // 获取最近的几条对话历史
+    const chatHistory = this.data.chatHistory || [];
+    const recentMessages = [];
+    
+    // 最多取最近5条对话组成上下文
+    for (let i = 0; i < Math.min(5, chatHistory.length); i++) {
+      const chat = chatHistory[i];
+      if (chat.question) {
+        recentMessages.push({
+          role: "user",
+          content: chat.question
+        });
+      }
+      if (chat.answer) {
+        recentMessages.push({
+          role: "assistant", 
+          content: chat.answer
+        });
+      }
+    }
+    
+    // 添加当前的问题
+    recentMessages.unshift({
+      role: "user",
+      content: query
+    });
+    
+    // 构建请求数据
+    const requestData = {
+      query: query,          // 当前查询
+      messages: recentMessages, // 对话历史
+      stream: false,         // 关闭流式响应
+      format: "markdown",    // 使用markdown格式
+      openid: openid || ''   // 用户标识
+    };
+
+    console.log('请求参数:', {
+      ...requestData,
+      messages: `包含${recentMessages.length}条消息` // 避免输出完整历史
+    });
+    console.log('请求URL:', `${API_BASE_URL}/api/agent/chat`);
+    
+    // 设置请求超时定时器
+    let requestTimer = setTimeout(() => {
+      that.setData({
+        loading: false,
+        textContent: '请求超时，请重试'
+      });
+      
+      // 不使用showToast，避免与页面加载指示器冲突
+    }, 30000); // 30秒超时
+    
+    // 发起请求
+    wx.request({
+      url: `${API_BASE_URL}/api/agent/chat`,
+      method: 'POST',
+      data: requestData,
+      header: {
+        'content-type': 'application/json'
+      },
+      success(res) {
+        clearTimeout(requestTimer);
+        
+        if (res.statusCode === 200 && res.data && res.data.code === 200) {
+          const responseData = res.data.data;
+          
+          // 存储响应文本
+          const responseText = responseData.response || '';
+          
+          // 更新界面
+          that.setData({
+            textContent: responseText,
+            loading: false
+          });
+          
+          // 处理富文本显示
+          if (!that.data.usePlainText && responseText) {
+            // 使用自定义Markdown渲染器生成HTML
+            const markdownHtml = that.simpleMarkdownToHtml(responseText);
+            that.setData({
+              markdownHtml: markdownHtml
+            });
+            
+            // 格式化富文本内容
+            that.formatRichTextContent(responseText);
+          }
+          
+          // 处理知识源
+          if (responseData.sources && Array.isArray(responseData.sources)) {
+            that.setData({ sources: responseData.sources });
+          }
+          
+          // 处理建议问题
+          if (responseData.suggested_questions && Array.isArray(responseData.suggested_questions)) {
+            that.setData({ suggestedQuestions: responseData.suggested_questions });
+          }
+          
+          // 保存对话记录
+          that.saveChatHistory(query, responseText, responseData.sources || []);
+        } else {
+          // 处理错误响应
+          console.error('API返回错误:', res.data);
+          let errorMsg = '搜索失败';
+          
+          if (res.data && res.data.message) {
+            errorMsg = res.data.message;
+          }
+          
+          that.setData({
+            loading: false,
+            textContent: `请求出错: ${errorMsg}`
+          });
+          
+          // 不使用showToast，避免与页面加载指示器冲突
+        }
+      },
+      fail(err) {
+        clearTimeout(requestTimer);
+        console.error('请求失败:', err);
+        
+        let errorMsg = '网络请求失败';
+        if (err && err.errMsg) {
+          if (err.errMsg.includes('timeout')) {
+            errorMsg = '请求超时';
+          }
+        }
+        
+        that.setData({
+          loading: false,
+          textContent: errorMsg
+        });
+        
+        // 不使用showToast，避免与页面加载指示器冲突
+      }
+    });
   }
 }) 
