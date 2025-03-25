@@ -2,24 +2,18 @@ const cloud = require('wx-server-sdk')
 cloud.init({
   env: 'nkuwiki-0g6bkdy9e8455d93'
 })
-const db = cloud.database()
-const _ = db.command
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { content, images = [], title = '', isPublic, authorId, authorName, authorAvatar, loginType } = event
+  const { content, images = [], title = '', isPublic = true } = event
   
   // 在云函数开始时记录所有参数
   console.log('createPost函数参数:', {
     content, 
     images, 
     title, 
-    isPublic, 
-    authorId, 
-    authorName, 
-    authorAvatar, 
-    loginType,
-    OPENID: cloud.getWXContext().OPENID
+    isPublic,
+    OPENID
   })
   
   // 检查标题和内容是否为空
@@ -36,89 +30,63 @@ exports.main = async (event, context) => {
       message: '帖子内容不能为空'
     }
   }
-  
-  // 尝试列出所有用户，检查是否能找到匹配的ID
-  const allUsers = await db.collection('users').get()
-  console.log('数据库中的所有用户:', allUsers.data.map(u => ({ 
-    id: u._id, 
-    name: u.nickName,
-    loginType: u.loginType
-  })))
 
   try {
-    // 获取用户信息
-    const userInfo = (await db.collection('users').where({
-      openid: OPENID
-    }).get()).data[0]
-
-    if (!userInfo) {
-      return {
-        success: false,
-        message: '用户未登录'
-      }
-    }
-
-    // 使用当前登录用户的ID作为作者ID，而不是依赖前端传递
-    const authorId = userInfo._id
-    const authorName = userInfo.nickName || '匿名用户'
-    const authorAvatar = userInfo.avatarUrl || '/assets/icons/default-avatar.png'
-    const loginType = userInfo.loginType || 'wechat'
-
-    // 打印接收到的数据
-    console.log('接收到的数据：', {
+    // 检查图片格式，确保所有图片都是合法的云存储URL
+    const validImages = Array.isArray(images) ? images.filter(img => 
+      typeof img === 'string' && 
+      (
+        img.startsWith('cloud://') || 
+        img.startsWith('https://') || 
+        img.startsWith('http://')
+      )
+    ) : [];
+    
+    console.log('有效图片列表:', validImages);
+    
+    // 构建创建帖子的数据
+    const postData = {
+      title,
       content,
-      images,
-      title
-    })
-
-    // 验证用户身份
-    const userCheck = await db.collection('users').doc(authorId).get()
-    if (!userCheck.data || userCheck.data.loginType !== loginType) {
-      return {
-        code: -1,
-        message: '用户身份验证失败'
-      }
+      images: validImages,
+      is_public: isPublic !== false
     }
-
-    // 创建帖子
-    const result = await db.collection('posts').add({
-      data: {
-        title,
-        content,
-        images,
-        authorId,
-        authorName,
-        authorAvatar,
-        loginType,  // 存储登录类型
-        createTime: db.serverDate(),
-        updateTime: db.serverDate(),
-        isPublic: isPublic !== false,
-        status: 'published',
-        likes: 0,
-        comments: [],
-        favoriteUsers: [],
-        likedUsers: [],
-        tags: [],
-        isHot: false,
-        isTop: false,
-        views: 0,
-        category: ''
+    
+    // 调用后端API创建帖子
+    const apiUrl = '/api/wxapp/posts'
+    
+    // 使用云函数http请求能力访问API
+    const result = await cloud.httpApi.invoke({
+      method: 'POST',
+      url: 'https://nkuwiki.com' + apiUrl,
+      body: postData,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-OpenID': OPENID
       }
     })
 
-    console.log('创建帖子结果：', result)
-
-    return {
-      code: 0,
-      data: result._id,
-      message: '发布成功'
+    // 处理API响应
+    if (result.statusCode === 200 || result.statusCode === 201) {
+      const responseData = JSON.parse(result.body)
+      
+      console.log('创建帖子结果：', responseData)
+      
+      return {
+        code: 0,
+        data: responseData.data.id,
+        message: '发布成功'
+      }
+    } else {
+      console.error('创建帖子API调用失败:', result)
+      throw new Error('创建帖子失败')
     }
 
   } catch (err) {
     console.error('发布失败：', err)
     return {
       code: -1,
-      message: '发布失败'
+      message: '发布失败: ' + (err.message || '')
     }
   }
 } 

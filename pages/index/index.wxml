@@ -106,8 +106,8 @@
               <text class="comment-content">
                 <!-- 如果既有文字内容又有图片 -->
                 <block wx:if="{{comment.content}}">{{comment.content}}</block>
-                <!-- 添加图片标识 -->
-                <block wx:if="{{comment.images.length > 0}}">[图片]</block>
+                <!-- 添加图片标识，使用空格分隔避免方括号被解析为图片路径 -->
+                <block wx:if="{{comment.images.length > 0}}"> 「图片」</block>
               </text>
             </block>
           </view>

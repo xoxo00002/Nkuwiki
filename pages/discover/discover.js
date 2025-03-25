@@ -1,3 +1,6 @@
+// 引入API模块
+const api = require('../../utils/api');
+
 Page({
   data: {
     posts: [],
@@ -38,18 +41,37 @@ Page({
     try {
       this.setData({ loading: true })
 
-      const db = wx.cloud.database()
-      const result = await db.collection('posts')
-        .orderBy('createTime', 'desc')
-        .skip((this.data.page - 1) * this.data.pageSize)
-        .limit(this.data.pageSize)
-        .get()
+      // 使用API模块获取帖子列表
+      const result = await api.post.getPosts({
+        page: refresh ? 1 : this.data.page,
+        pageSize: this.data.pageSize,
+        order_by: 'create_time DESC'
+      });
 
-      const posts = result.data
+      if (!result || !result.success) {
+        throw new Error('获取帖子列表失败')
+      }
+
+      const posts = result.posts || []
+      console.log('发现页获取到的帖子数量:', posts.length)
+
+      // 处理帖子数据
+      const processedPosts = posts.map(post => {
+        return {
+          ...post,
+          _id: post.id,  // 兼容旧代码
+          createTime: post.create_time,
+          isLiked: post.liked_users?.includes(this.data.userInfo?.openid || '') || false,
+          isFavorited: post.favorite_users?.includes(this.data.userInfo?.openid || '') || false,
+          commentCount: post.comment_count || 0,
+          likes: post.like_count || 0,
+          favoriteCounts: post.favorite_count || 0
+        };
+      });
 
       this.setData({
-        posts: refresh ? posts : [...this.data.posts, ...posts],
-        page: this.data.page + 1,
+        posts: refresh ? processedPosts : [...this.data.posts, ...processedPosts],
+        page: refresh ? 2 : this.data.page + 1,
         hasMore: posts.length === this.data.pageSize,
         loading: false
       })
@@ -75,22 +97,17 @@ Page({
   async handleLike(e) {
     const { id, index } = e.currentTarget.dataset
     try {
-      const res = await wx.cloud.callFunction({
-        name: 'posts',
-        data: {
-          type: 'toggleLike',
-          postId: id
-        }
-      })
+      // 使用API模块点赞帖子
+      const result = await api.post.likePost(id);
 
-      if (res.result.success) {
+      if (result.success) {
         const key = `posts[${index}].stats.likes`
         const keyLiked = `posts[${index}].userInteraction.isLiked`
-        const delta = res.result.hasLiked ? 1 : -1
+        const delta = result.liked ? 1 : -1
 
         this.setData({
           [key]: this.data.posts[index].stats.likes + delta,
-          [keyLiked]: res.result.hasLiked
+          [keyLiked]: result.liked
         })
       }
     } catch (err) {

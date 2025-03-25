@@ -1,4 +1,6 @@
 // 我的帖子页面
+const api = require('../../../utils/api');
+
 Page({
   data: {
     posts: [],
@@ -25,21 +27,18 @@ Page({
       
       console.log('当前用户信息:', userInfo)
       
-      const res = await wx.cloud.callFunction({
-        name: 'getUserPosts',
-        data: {
-          page,
-          pageSize: this.data.pageSize,
-          // 传入用户ID以确保查询正确
-          openid: userInfo._id || userInfo.openid
-        }
-      })
+      const result = await api.post.getUserPosts({
+        page,
+        pageSize: this.data.pageSize,
+        // 传入用户ID以确保查询正确
+        openid: userInfo._id || userInfo.openid
+      });
       
-      console.log('云函数返回结果:', res.result)
+      console.log('API返回结果:', result)
       
-      if (res.result && res.result.success) {
+      if (result && result.success) {
         // 处理帖子数据，添加格式化时间
-        const posts = res.result.posts.map(post => {
+        const posts = result.posts.map(post => {
           return {
             ...post,
             formattedTime: this.formatTime(post.createTime)
@@ -57,7 +56,7 @@ Page({
         
         console.log('更新页面数据完成, 总条数:', this.data.posts.length)
       } else {
-        throw new Error(res.result?.message || '加载失败')
+        throw new Error(result?.message || '加载失败')
       }
     } catch (err) {
       console.error('加载帖子失败：', err)

@@ -1,12 +1,9 @@
-// 优化点赞云函数
+// 优化点赞云函数 - 改为后端API调用
 const cloud = require('wx-server-sdk')
 
 cloud.init({
   env: 'nkuwiki-0g6bkdy9e8455d93'
 })
-
-const db = cloud.database()
-const _ = db.command
 
 // 切换点赞状态
 async function toggleLike(openid, postId) {
@@ -21,44 +18,35 @@ async function toggleLike(openid, postId) {
   }
 
   try {
-    // 先检查帖子是否存在
-    const postQuery = await db.collection('posts').where({
-      _id: postId
-    }).get();
+    // 调用后端API进行点赞/取消点赞操作
+    const apiUrl = `/api/wxapp/posts/${postId}/like`;
     
-    if (!postQuery.data || postQuery.data.length === 0) {
-      console.log('帖子不存在:', postId);
-      return {
-        success: false,
-        message: '帖子不存在或已被删除'
-      };
-    }
-
-    const post = postQuery.data[0];
-    const likedUsers = post.likedUsers || [];
-    const hasLiked = likedUsers.includes(openid);
-    
-    console.log('当前点赞状态:', {
-      postId,
-      likes: post.likes || 0,
-      hasLiked,
-      likedUsersCount: likedUsers.length
-    });
-
-    // 更新点赞状态
-    await db.collection('posts').doc(postId).update({
-      data: {
-        likes: hasLiked ? _.inc(-1) : _.inc(1),
-        likedUsers: hasLiked ? _.pull(openid) : _.addToSet(openid), // 使用addToSet防止重复添加
-        updateTime: db.serverDate()
+    // 使用云函数http请求能力访问API
+    const result = await cloud.httpApi.invoke({
+      method: 'POST',
+      url: 'https://nkuwiki.com' + apiUrl,
+      body: {},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-OpenID': openid
       }
     });
 
-    return {
-      success: true,
-      hasLiked: !hasLiked,
-      message: hasLiked ? '取消点赞成功' : '点赞成功'
-    };
+    // 处理API响应
+    if (result.statusCode === 200) {
+      const responseData = JSON.parse(result.body);
+      const isLiked = responseData.data.is_liked;
+      
+      return {
+        success: true,
+        hasLiked: isLiked,
+        message: isLiked ? '点赞成功' : '取消点赞成功'
+      };
+    } else {
+      console.error('点赞API调用失败:', result);
+      throw new Error('点赞操作失败');
+    }
+    
   } catch (err) {
     console.error('点赞操作失败:', err);
     return {
@@ -103,18 +91,3 @@ exports.main = async (event, context) => {
     };
   }
 };
-
-// 更新用户获赞统计
-async function updateUserLikeStats(userId, delta) {
-  try {
-    if (!userId) return
-    
-    await db.collection('users').doc(userId).update({
-      data: {
-        likes: _.inc(delta)
-      }
-    })
-  } catch (err) {
-    console.error('更新用户获赞数失败：', err)
-  }
-}

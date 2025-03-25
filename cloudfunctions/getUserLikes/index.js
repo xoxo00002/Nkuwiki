@@ -1,5 +1,6 @@
-// 获取用户帖子云函数 - 改为后端API调用
+// 获取用户点赞列表云函数 - 调用后端API
 const cloud = require('wx-server-sdk')
+const httpRequest = require('./httpRequest')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -10,7 +11,7 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = event.openid || wxContext.OPENID
   
-  console.log('调用getUserPosts云函数:', {
+  console.log('调用getUserLikes云函数:', {
     用户openid: openid,
     事件参数: event
   })
@@ -19,12 +20,12 @@ exports.main = async (event, context) => {
   if (event.countOnly) {
     try {
       // 调用统计API
-      const apiUrl = `/api/wxapp/users/posts/count?openid=${openid}`;
+      const apiUrl = `https://nkuwiki.com/api/wxapp/users/likes/count?openid=${openid}`;
       
-      // 使用云函数http请求能力访问API
-      const result = await cloud.httpApi.invoke({
+      // 使用自定义HTTP请求工具访问API
+      const result = await httpRequest.request({
+        url: apiUrl,
         method: 'GET',
-        url: 'https://nkuwiki.com' + apiUrl,
         headers: {
           'X-User-OpenID': openid
         }
@@ -32,7 +33,7 @@ exports.main = async (event, context) => {
 
       // 处理API响应
       if (result.statusCode === 200) {
-        const responseData = JSON.parse(result.body);
+        const responseData = result.data;
         console.log('统计结果:', responseData);
         
         return {
@@ -40,35 +41,35 @@ exports.main = async (event, context) => {
           count: responseData.data.count
         }
       } else {
-        console.error('获取帖子统计API调用失败:', result);
+        console.error('获取点赞统计API调用失败:', result);
         throw new Error('获取统计数据失败');
       }
       
     } catch (err) {
-      console.error('获取帖子数量失败：', err);
+      console.error('获取点赞数量失败：', err);
       return {
         success: false,
         message: '获取数据失败'
       }
     }
   } else {
-    // 获取帖子列表模式
+    // 获取点赞列表模式
     try {
       const { page = 1, pageSize = 10 } = event;
       
-      console.log('开始获取帖子列表, 请求参数:', { 
+      console.log('开始获取点赞列表, 请求参数:', { 
         openid: openid,
         页码: page,
         每页数量: pageSize
       });
       
-      // 调用后端API获取用户帖子列表
-      const apiUrl = `/api/wxapp/users/posts?openid=${openid}&page=${page}&limit=${pageSize}`;
+      // 调用后端API获取用户点赞列表
+      const apiUrl = `https://nkuwiki.com/api/wxapp/users/likes?openid=${openid}&page=${page}&limit=${pageSize}`;
       
-      // 使用云函数http请求能力访问API
-      const result = await cloud.httpApi.invoke({
+      // 使用自定义HTTP请求工具访问API
+      const result = await httpRequest.request({
+        url: apiUrl,
         method: 'GET',
-        url: 'https://nkuwiki.com' + apiUrl,
         headers: {
           'X-User-OpenID': openid
         }
@@ -76,24 +77,24 @@ exports.main = async (event, context) => {
 
       // 处理API响应
       if (result.statusCode === 200) {
-        const responseData = JSON.parse(result.body);
+        const responseData = result.data;
         console.log('查询结果:', responseData);
         
         return {
           success: true,
-          posts: responseData.data.posts,
+          likes: responseData.data.likes,
           total: responseData.data.total
         }
       } else {
-        console.error('获取用户帖子API调用失败:', result);
-        throw new Error('获取用户帖子列表失败');
+        console.error('获取用户点赞API调用失败:', result);
+        throw new Error('获取用户点赞列表失败');
       }
       
     } catch (err) {
-      console.error('获取用户帖子列表失败：', err);
+      console.error('获取用户点赞列表失败：', err);
       return {
         success: false,
-        message: '获取帖子列表失败'
+        message: '获取点赞列表失败'
       }
     }
   }

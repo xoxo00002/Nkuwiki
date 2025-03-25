@@ -1,4 +1,6 @@
 // pages/profile/edit/edit.js
+const api = require('../../../utils/api');
+
 Page({
   data: {
     userInfo: null,
@@ -48,30 +50,24 @@ Page({
     try {
       wx.showLoading({ title: '更新中...' })
 
-      // 上传图片到云存储
-      const uploadRes = await wx.cloud.uploadFile({
-        cloudPath: `avatars/${this.data.userInfo._id}_${Date.now()}.jpg`,
-        filePath: avatarUrl
-      })
+      // 使用API模块上传图片
+      const uploadResult = await api.upload.uploadImage(avatarUrl, `avatars/${this.data.userInfo._id}_${Date.now()}.jpg`);
 
-      if (!uploadRes.fileID) {
+      if (!uploadResult.fileID) {
         throw new Error('上传失败')
       }
 
-      // 调用更新用户信息的云函数
-      const res = await wx.cloud.callFunction({
-        name: 'updateUser',
-        data: {
-          avatarUrl: uploadRes.fileID,
-          userId: this.data.userInfo._id,  // 添加用户ID
-          loginType: this.data.userInfo.loginType  // 添加登录类型
-        }
-      })
+      // 使用API模块更新用户信息
+      const result = await api.user.updateUser({
+        avatarUrl: uploadResult.fileID,
+        userId: this.data.userInfo._id,  // 添加用户ID
+        loginType: this.data.userInfo.loginType  // 添加登录类型
+      });
 
-      if (res.result.code === 0) {
+      if (result.code === 0) {
         // 更新本地存储和页面数据
         const userInfo = this.data.userInfo
-        userInfo.avatarUrl = uploadRes.fileID
+        userInfo.avatarUrl = uploadResult.fileID
         wx.setStorageSync('userInfo', userInfo)
         this.setData({ userInfo })
 
@@ -80,7 +76,7 @@ Page({
           icon: 'success'
         })
       } else {
-        throw new Error(res.result.message || '更新失败')
+        throw new Error(result.message || '更新失败')
       }
     } catch (err) {
       console.error('更新头像失败:', err)
@@ -137,12 +133,10 @@ Page({
         return
       }
 
-      const res = await wx.cloud.callFunction({
-        name: 'updateUser',
-        data: updateData
-      })
+      // 使用API模块更新用户信息
+      const result = await api.user.updateUser(updateData);
 
-      if (res.result.success) {
+      if (result.success) {
         // 更新本地存储中已修改的字段
         const userInfo = this.data.userInfo
         if (updateData.nickName) userInfo.nickName = updateData.nickName
@@ -159,7 +153,7 @@ Page({
           wx.navigateBack()
         }, 1500)
       } else {
-        throw new Error(res.result.message || '保存失败')
+        throw new Error(result.message || '保存失败')
       }
     } catch (err) {
       console.error('保存失败：', err)

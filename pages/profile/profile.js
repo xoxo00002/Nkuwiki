@@ -44,20 +44,21 @@ Page({
       console.log('开始获取用户帖子数量')
       wx.showLoading({ title: '加载中...' })
 
-      const res = await wx.cloud.callFunction({
-        name: 'getUserPosts',
-        data: {
-          countOnly: true,
-          openid: this.data.userInfo._id || this.data.userInfo.openid
-        }
-      })
+      // 导入API模块
+      const api = require('../../utils/api');
+      
+      // 调用API获取用户帖子数量
+      const result = await api.post.getUserPosts({
+        countOnly: true,
+        openid: this.data.userInfo._id || this.data.userInfo.openid
+      });
 
-      console.log('获取帖子数量结果:', res.result)
+      console.log('获取帖子数量结果:', result)
 
-      if (res.result && res.result.success) {
+      if (result && result.success) {
         // 更新本地用户信息中的帖子数量
         const userInfo = this.data.userInfo
-        userInfo.posts = res.result.count
+        userInfo.posts = result.count
 
         // 更新页面显示和本地存储
         this.setData({ userInfo })
@@ -80,20 +81,21 @@ Page({
       console.log('开始获取用户获赞总数')
       wx.showLoading({ title: '加载中...' })
 
-      const res = await wx.cloud.callFunction({
-        name: 'getUserPosts',
-        data: {
-          openid: this.data.userInfo._id || this.data.userInfo.openid,
-          includePostData: true  // 请求包含帖子数据
-        }
-      })
+      // 导入API模块
+      const api = require('../../utils/api');
+      
+      // 调用API获取用户帖子数据
+      const result = await api.post.getUserPosts({
+        openid: this.data.userInfo._id || this.data.userInfo.openid,
+        includePostData: true  // 请求包含帖子数据
+      });
 
-      console.log('获取用户帖子结果:', res.result)
+      console.log('获取用户帖子结果:', result)
 
-      if (res.result && res.result.success && res.result.posts) {
+      if (result && result.success && result.posts) {
         // 计算所有帖子的点赞总数
         let totalLikes = 0
-        res.result.posts.forEach(post => {
+        result.posts.forEach(post => {
           totalLikes += (post.likes || 0)
         })
 
@@ -282,9 +284,11 @@ Page({
       // 先清除旧的登录状态
       wx.clearStorageSync()
 
-      const { result } = await wx.cloud.callFunction({
-        name: 'login'
-      })
+      // 导入API模块
+      const api = require('../../utils/api');
+      
+      // 调用API进行登录
+      const result = await api.user.login();
 
       if (result.code === 0 && result.data) {
         wx.setStorageSync('userInfo', result.data)
@@ -365,15 +369,15 @@ Page({
   async onChooseAvatar(e) {
     const { avatarUrl } = e.detail
     try {
-      // 调用更新用户信息的云函数
-      const res = await wx.cloud.callFunction({
-        name: 'updateUser',
-        data: {
-          avatarUrl
-        }
-      })
+      // 导入API模块
+      const api = require('../../utils/api');
+      
+      // 调用API更新用户头像
+      const result = await api.user.updateUser({
+        avatarUrl
+      });
 
-      if (res.result.code === 0) {
+      if (result.code === 0) {
         // 更新本地存储的用户信息
         const userInfo = wx.getStorageSync('userInfo')
         userInfo.avatarUrl = avatarUrl

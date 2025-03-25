@@ -1,3 +1,6 @@
+// 引入API模块
+const api = require('../../utils/api');
+
 Page({
   data: {
     title: '',
@@ -296,7 +299,7 @@ Page({
       mask: true
     });
     
-    // 准备要发送到云函数的数据
+    // 准备要发送到API的数据
     const postData = {
       title: title,
       content: content,
@@ -304,13 +307,11 @@ Page({
       isPublic: this.data.isPublic
     };
     
-    // 调用现有的云函数发布帖子
-    wx.cloud.callFunction({
-      name: 'createPost', 
-      data: postData,
-      success: res => {
+    // 使用API模块创建帖子
+    api.post.createPost(postData)
+      .then(result => {
         wx.hideLoading();
-        if (res.result && res.result.code === 0) {
+        if (result && result.success) {
           wx.showToast({
             title: '发布成功',
             icon: 'success',
@@ -323,20 +324,19 @@ Page({
           });
         } else {
           wx.showToast({
-            title: res.result ? res.result.message : '发布失败',
+            title: result ? result.message : '发布失败',
             icon: 'none'
           });
         }
-      },
-      fail: err => {
+      })
+      .catch(err => {
         console.error('发布失败:', err);
         wx.hideLoading();
         wx.showToast({
           title: '发布失败，请稍后重试',
           icon: 'none'
         });
-      }
-    });
+      });
   },
 
   onLoad: function() {

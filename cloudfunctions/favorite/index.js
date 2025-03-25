@@ -1,12 +1,9 @@
-// 收藏功能云函数
+// 收藏功能云函数 - 改为后端API调用
 const cloud = require('wx-server-sdk')
 
 cloud.init({
   env: 'nkuwiki-0g6bkdy9e8455d93'
 })
-
-const db = cloud.database()
-const _ = db.command
 
 // 切换收藏状态 
 async function toggleFavorite(openid, postId) {
@@ -21,42 +18,35 @@ async function toggleFavorite(openid, postId) {
   }
 
   try {
-    // 先检查帖子是否存在
-    const postQuery = await db.collection('posts').where({
-      _id: postId
-    }).get();
+    // 调用后端API进行收藏/取消收藏操作
+    const apiUrl = `/api/wxapp/posts/${postId}/favorite`;
     
-    if (!postQuery.data || postQuery.data.length === 0) {
-      console.log('帖子不存在:', postId);
-      return {
-        success: false,
-        message: '帖子不存在或已被删除'
-      };
-    }
-
-    const post = postQuery.data[0];
-    const favoriteUsers = post.favoriteUsers || [];
-    const hasFavorited = favoriteUsers.includes(openid);
-    
-    console.log('当前收藏状态:', {
-      postId,
-      hasFavorited,
-      favoriteUsersCount: favoriteUsers.length
-    });
-
-    // 更新收藏状态
-    await db.collection('posts').doc(postId).update({
-      data: {
-        favoriteUsers: hasFavorited ? _.pull(openid) : _.addToSet(openid), // 使用addToSet防止重复添加
-        updateTime: db.serverDate()
+    // 使用云函数http请求能力访问API
+    const result = await cloud.httpApi.invoke({
+      method: 'POST',
+      url: 'https://nkuwiki.com' + apiUrl,
+      body: {},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-OpenID': openid
       }
     });
 
-    return {
-      success: true,
-      hasFavorited: !hasFavorited,
-      message: hasFavorited ? '取消收藏成功' : '收藏成功'
-    };
+    // 处理API响应
+    if (result.statusCode === 200) {
+      const responseData = JSON.parse(result.body);
+      const isFavorited = responseData.data.is_favorited;
+      
+      return {
+        success: true,
+        hasFavorited: isFavorited,
+        message: isFavorited ? '收藏成功' : '取消收藏成功'
+      };
+    } else {
+      console.error('收藏API调用失败:', result);
+      throw new Error('收藏操作失败');
+    }
+    
   } catch (err) {
     console.error('收藏操作失败:', err);
     return {
