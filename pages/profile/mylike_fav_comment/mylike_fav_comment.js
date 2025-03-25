@@ -1,5 +1,5 @@
 // 我的帖子页面
-const api = require('../../../utils/api');
+const api = require('../../../utils/api/index');
 
 Page({
   data: {
@@ -56,6 +56,11 @@ Page({
       console.log('当前用户信息:', userInfo)
       
       // 使用API模块获取用户的点赞、收藏或评论帖子
+      // 注意: 后端API目前没有直接支持获取用户交互帖子的接口
+      // 后续需要完善:
+      // 1. 修改后端API添加相关接口
+      // 2. 或者在前端维护用户交互记录
+      // 目前是临时实现，可能无法正常工作
       const result = await api.user.getUserInteractionPosts({
         page,
         pageSize: this.data.pageSize,

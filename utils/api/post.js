@@ -150,7 +150,7 @@ async function likePost(postId) {
       };
     }
     
-    const result = await request.post(`/api/wxapp/posts/${postId}/like`, { openid });
+    const result = await request.post(`/api/wxapp/posts/${postId}/like`, {}, {}, { openid });
     
     return {
       success: true,
@@ -184,16 +184,42 @@ async function createPost(postData) {
     // 获取用户信息
     const userInfo = wx.getStorageSync('userInfo') || {};
     
-    // 准备帖子数据
+    // 检查必要字段
+    if (!postData.title) {
+      throw new Error('帖子标题不能为空');
+    }
+    
+    if (!postData.content) {
+      throw new Error('帖子内容不能为空');
+    }
+    
+    // 准备帖子数据，确保符合API要求的格式
     const data = {
-      ...postData,
-      nick_name: userInfo.nick_name,
-      avatar: userInfo.avatar
+      title: postData.title,
+      content: postData.content,
+      images: postData.images || [],
+      category_id: postData.category_id || 1,
+      status: postData.isPublic !== undefined ? (postData.isPublic ? 1 : 0) : 1,
+      allow_comment: postData.allow_comment !== undefined ? postData.allow_comment : 1,
+      // 添加用户信息
+      author_name: userInfo.nickName || userInfo.nick_name || '用户',
+      author_avatar: userInfo.avatarUrl || userInfo.avatar || '',
     };
     
-    const result = await request.post('/api/wxapp/posts', data, {
-      openid
-    });
+    // 准备URL查询参数
+    const query = {
+      openid: openid,
+      nick_name: userInfo.nickName || userInfo.nick_name || '',
+      avatar: userInfo.avatarUrl || userInfo.avatar || ''
+    };
+    
+    console.debug('准备发送帖子数据:', data);
+    console.debug('URL查询参数:', query);
+    
+    // 发送请求，通过query参数传递openid
+    const result = await request.post('/api/wxapp/posts', data, {}, query);
+    
+    console.debug('帖子创建API响应:', result);
     
     return {
       success: true,
@@ -202,6 +228,23 @@ async function createPost(postData) {
     };
   } catch (err) {
     console.error('发布帖子失败:', err);
+    
+    // 检查是否是网络错误
+    if (err.code === -1) {
+      return {
+        success: false,
+        message: '网络连接失败，请检查网络设置'
+      };
+    }
+    
+    // 检查是否是后端API错误
+    if (err.code >= 400) {
+      return {
+        success: false,
+        message: `服务器错误 (${err.code}): ${err.message || '未知错误'}`
+      };
+    }
+    
     return {
       success: false,
       message: '发布帖子失败: ' + (err.message || '未知错误')
@@ -229,9 +272,8 @@ async function updatePost(postId, postData) {
       };
     }
     
-    const result = await request.put(`/api/wxapp/posts/${postId}`, postData, {
-      openid
-    });
+    // 将openid作为查询参数传递，而不是header
+    const result = await request.put(`/api/wxapp/posts/${postId}`, postData, {}, { openid });
     
     return {
       success: true,
@@ -266,7 +308,7 @@ async function deletePost(postId) {
       };
     }
     
-    const result = await request.delete(`/api/wxapp/posts/${postId}`, { openid });
+    const result = await request.delete(`/api/wxapp/posts/${postId}`, {}, {}, { openid });
     
     return {
       success: true,
@@ -300,7 +342,7 @@ async function favoritePost(postId) {
       };
     }
     
-    const result = await request.post(`/api/wxapp/posts/${postId}/favorite`, { openid });
+    const result = await request.post(`/api/wxapp/posts/${postId}/favorite`, {}, {}, { openid });
     
     return {
       success: true,
@@ -338,7 +380,7 @@ async function unfavoritePost(postId) {
       };
     }
     
-    const result = await request.post(`/api/wxapp/posts/${postId}/unfavorite`, { openid });
+    const result = await request.post(`/api/wxapp/posts/${postId}/unfavorite`, {}, {}, { openid });
     
     return {
       success: true,
@@ -357,6 +399,61 @@ async function unfavoritePost(postId) {
   }
 }
 
+/**
+ * 获取用户发布的帖子
+ * @param {Object} params - 请求参数
+ * @param {string} params.openid - 用户openid
+ * @param {boolean} params.countOnly - 是否只获取数量
+ * @param {boolean} params.includePostData - 是否包含帖子详细数据
+ * @param {number} params.page - 页码
+ * @param {number} params.pageSize - 每页数量
+ * @returns {Promise} - 返回Promise对象
+ */
+async function getUserPosts(params = {}) {
+  try {
+    // 优先使用传入的openid，否则从存储中获取
+    const openid = params.openid || wx.getStorageSync('openid');
+    if (!openid) {
+      throw new Error('未提供openid且未登录');
+    }
+    
+    console.debug('获取用户帖子:', { openid, params });
+    
+    // 构建请求参数 - 包含openid用于筛选
+    const requestParams = {
+      openid: openid,
+      limit: params.pageSize || 10,
+      offset: ((params.page || 1) - 1) * (params.pageSize || 10)
+    };
+    
+    // 实际接口只有GET /api/wxapp/posts，通过查询参数筛选用户
+    const result = await request.get('/api/wxapp/posts', requestParams);
+    console.debug('获取用户帖子列表成功:', result);
+    
+    // 如果只需要数量
+    if (params.countOnly) {
+      return {
+        success: true,
+        count: result.data.total || 0,
+        message: '获取帖子数量成功'
+      };
+    } else {
+      return {
+        success: true,
+        posts: result.data.posts || [],
+        total: result.data.total || 0,
+        message: '获取帖子列表成功'
+      };
+    }
+  } catch (err) {
+    console.error('获取用户帖子失败:', err);
+    return {
+      success: false,
+      message: '获取用户帖子失败: ' + (err.message || '未知错误')
+    };
+  }
+}
+
 module.exports = {
   getPosts,
   getPostDetail,
@@ -366,5 +463,6 @@ module.exports = {
   updatePost,
   deletePost,
   favoritePost,
-  unfavoritePost
+  unfavoritePost,
+  getUserPosts
 }; 

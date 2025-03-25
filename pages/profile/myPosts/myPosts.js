@@ -1,5 +1,5 @@
 // 我的帖子页面
-const api = require('../../../utils/api');
+const api = require('../../../utils/api/index');
 
 Page({
   data: {

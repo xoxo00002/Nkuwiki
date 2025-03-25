@@ -1,7 +1,7 @@
 const app = getApp()
 const util = require('../../../utils/util');
 // 引入API模块
-const api = require('../../../utils/api');
+const api = require('../../../utils/api/index');
 
 Page({
   data: {

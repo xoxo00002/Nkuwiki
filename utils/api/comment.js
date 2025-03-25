@@ -40,8 +40,10 @@ async function createComment(commentData) {
       avatar: userInfo.avatar
     };
     
-    const result = await request.post('/api/wxapp/comments', data, {
-      openid
+    const result = await request.post('/api/wxapp/comments', data, {}, {
+      openid,
+      nick_name: userInfo.nick_name,
+      avatar: userInfo.avatar
     });
     
     return {
@@ -115,7 +117,8 @@ async function deleteComment(commentId) {
       };
     }
     
-    const result = await request.delete(`/api/wxapp/comments/${commentId}`, { openid });
+    // 使用查询参数传递openid
+    const result = await request.delete(`/api/wxapp/comments/${commentId}`, {}, {}, { openid });
     
     return {
       success: true,
@@ -149,7 +152,7 @@ async function likeComment(commentId) {
       };
     }
     
-    const result = await request.post(`/api/wxapp/comments/${commentId}/like`, { openid });
+    const result = await request.post(`/api/wxapp/comments/${commentId}/like`, {}, {}, { openid });
     
     return {
       success: true,
@@ -187,7 +190,7 @@ async function unlikeComment(commentId) {
       };
     }
     
-    const result = await request.post(`/api/wxapp/comments/${commentId}/unlike`, { openid });
+    const result = await request.post(`/api/wxapp/comments/${commentId}/unlike`, {}, {}, { openid });
     
     return {
       success: true,

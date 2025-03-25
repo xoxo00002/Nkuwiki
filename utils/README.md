@@ -122,7 +122,7 @@ saveUserInfo() {
 
 ```javascript
 // 导入API模块
-const api = require('../../utils/api');
+const api = require('../../utils/api/index');
 
 // 使用 api.js 的登录代码
 async onLogin() {

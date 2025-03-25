@@ -38,14 +38,15 @@ Page({
 
   // 获取用户发帖数量
   async getUserPostsCount() {
-    if (!this.data.userInfo) return
+    if (!this.data.userInfo) return;
 
     try {
-      console.log('开始获取用户帖子数量')
-      wx.showLoading({ title: '加载中...' })
-
+      console.log('开始获取用户帖子数量');
+      
       // 导入API模块
-      const api = require('../../utils/api');
+      const api = require('../../utils/api/index');
+      
+      wx.showLoading({ title: '加载中...' });
       
       // 调用API获取用户帖子数量
       const result = await api.post.getUserPosts({
@@ -53,61 +54,213 @@ Page({
         openid: this.data.userInfo._id || this.data.userInfo.openid
       });
 
-      console.log('获取帖子数量结果:', result)
+      wx.hideLoading();
+      console.log('获取帖子数量结果:', result);
 
       if (result && result.success) {
         // 更新本地用户信息中的帖子数量
-        const userInfo = this.data.userInfo
-        userInfo.posts = result.count
+        const userInfo = this.data.userInfo;
+        userInfo.posts = result.count;
 
         // 更新页面显示和本地存储
-        this.setData({ userInfo })
-        wx.setStorageSync('userInfo', userInfo)
-        console.log('更新后的帖子数量:', userInfo.posts)
+        this.setData({ userInfo });
+        wx.setStorageSync('userInfo', userInfo);
+        console.log('更新后的帖子数量:', userInfo.posts);
       }
-
-      wx.hideLoading()
     } catch (err) {
-      console.error('获取帖子数量失败：', err)
-      wx.hideLoading()
+      console.error('获取帖子数量失败：', err);
+      wx.hideLoading();
     }
   },
 
-  // 获取用户获赞总数
+  // 获取用户获赞总数和其他统计数据
   async getUserTotalLikes() {
-    if (!this.data.userInfo) return
+    if (!this.data.userInfo) return;
 
     try {
-      console.log('开始获取用户获赞总数')
-      wx.showLoading({ title: '加载中...' })
+      console.log('开始获取用户统计数据');
+      wx.showLoading({ title: '加载中...' });
 
       // 导入API模块
-      const api = require('../../utils/api');
+      const api = require('../../utils/api/index');
       
-      // 调用API获取用户帖子数据
-      const result = await api.post.getUserPosts({
-        openid: this.data.userInfo._id || this.data.userInfo.openid,
-        includePostData: true  // 请求包含帖子数据
-      });
-
-      console.log('获取用户帖子结果:', result)
-
-      if (result && result.success && result.posts) {
-        // 计算所有帖子的点赞总数
-        let totalLikes = 0
-        result.posts.forEach(post => {
-          totalLikes += (post.likes || 0)
-        })
-
-        // 更新页面显示
-        this.setData({ totalLikes })
-        console.log('用户获赞总数:', totalLikes)
+      // 使用用户API获取用户信息（包含统计数据）
+      const result = await api.user.getUserInfo({ isSelf: true });
+      
+      wx.hideLoading();
+      console.log('获取用户信息完整结果:', result);
+      console.log('result.success:', result.success);
+      console.log('result.userInfo:', result.userInfo);
+      
+      if (result.userInfo && typeof result.userInfo === 'object') {
+        console.log('result.userInfo字段详情:', Object.keys(result.userInfo));
+        console.log('likes_count值:', result.userInfo.likes_count);
+        console.log('posts_count值:', result.userInfo.posts_count);
+        console.log('头像和昵称:', result.userInfo.avatar, result.userInfo.nick_name);
       }
 
-      wx.hideLoading()
+      if (result && result.success && result.userInfo) {
+        // 提取用户统计数据
+        const userData = result.userInfo;
+        
+        // 更新获赞总数
+        const totalLikes = userData.likes_count || 0;
+        
+        // 更新用户信息（包括头像、昵称和所有统计数据）
+        const userInfo = {
+          ...this.data.userInfo,
+          // 完全匹配后端返回的所有字段
+          id: userData.id,
+          openid: userData.openid,
+          unionid: userData.unionid,
+          nick_name: userData.nick_name,
+          avatar: userData.avatar,
+          gender: userData.gender,
+          bio: userData.bio,
+          country: userData.country,
+          province: userData.province,
+          city: userData.city,
+          language: userData.language,
+          birthday: userData.birthday,
+          wechatId: userData.wechatId,
+          qqId: userData.qqId,
+          token_count: userData.token_count,
+          likes_count: userData.likes_count || 0,
+          favorites_count: userData.favorites_count || 0,
+          posts_count: userData.posts_count || 0,
+          followers_count: userData.followers_count || 0,
+          following_count: userData.following_count || 0,
+          extra: userData.extra,
+          create_time: userData.create_time,
+          update_time: userData.update_time,
+          last_login: userData.last_login,
+          platform: userData.platform,
+          status: userData.status,
+          is_deleted: userData.is_deleted,
+          
+          // 兼容小程序使用的字段
+          avatarUrl: userData.avatar,
+          nickName: userData.nick_name,
+          posts: userData.posts_count || 0, // 兼容旧版字段
+          _id: userData.openid,
+        };
+        
+        // 更新页面显示
+        this.setData({ 
+          totalLikes,
+          userInfo 
+        });
+        console.log('用户获赞总数:', totalLikes);
+        
+        // 更新本地存储
+        wx.setStorageSync('userInfo', userInfo);
+        console.log('已更新本地用户信息:', userInfo);
+      } else if (result && result.code === 200 && result.data) {
+        // 直接从result.data获取信息
+        const userData = result.data;
+        const totalLikes = userData.likes_count || 0;
+        
+        // 更新用户信息（包括头像、昵称和所有统计数据）
+        const userInfo = {
+          ...this.data.userInfo,
+          // 完全匹配后端返回的所有字段
+          id: userData.id,
+          openid: userData.openid,
+          unionid: userData.unionid,
+          nick_name: userData.nick_name,
+          avatar: userData.avatar,
+          gender: userData.gender,
+          bio: userData.bio,
+          country: userData.country,
+          province: userData.province,
+          city: userData.city,
+          language: userData.language,
+          birthday: userData.birthday,
+          wechatId: userData.wechatId,
+          qqId: userData.qqId,
+          token_count: userData.token_count,
+          likes_count: userData.likes_count || 0,
+          favorites_count: userData.favorites_count || 0,
+          posts_count: userData.posts_count || 0,
+          followers_count: userData.followers_count || 0,
+          following_count: userData.following_count || 0,
+          extra: userData.extra,
+          create_time: userData.create_time,
+          update_time: userData.update_time,
+          last_login: userData.last_login,
+          platform: userData.platform,
+          status: userData.status,
+          is_deleted: userData.is_deleted,
+          
+          // 兼容小程序使用的字段
+          avatarUrl: userData.avatar,
+          nickName: userData.nick_name,
+          posts: userData.posts_count || 0, // 兼容旧版字段
+          _id: userData.openid,
+        };
+        
+        // 更新页面显示
+        this.setData({ 
+          totalLikes,
+          userInfo 
+        });
+        
+        // 更新本地存储
+        wx.setStorageSync('userInfo', userInfo);
+        console.log('已更新本地用户信息:', userInfo);
+      } else {
+        // 如果无法获取用户信息，尝试获取用户帖子列表并手动计算
+        console.log('未能通过API获取用户数据，尝试备用方法', result);
+        this.calculateTotalLikes();
+      }
     } catch (err) {
-      console.error('获取获赞总数失败：', err)
-      wx.hideLoading()
+      console.error('获取用户统计数据失败：', err);
+      wx.hideLoading();
+      
+      // 出错时尝试备用方案
+      this.calculateTotalLikes();
+    }
+  },
+  
+  // 通过获取用户帖子列表来计算总获赞数的备用方法
+  async calculateTotalLikes() {
+    try {
+      console.log('开始通过帖子列表计算用户获赞总数');
+      wx.showLoading({ title: '加载中...' });
+      
+      // 导入API模块
+      const api = require('../../utils/api/index');
+      
+      // 获取用户帖子列表
+      const result = await api.post.getUserPosts({
+        isSelf: true,
+        includePostData: true
+      });
+      
+      wx.hideLoading();
+      
+      if (result && result.success && result.posts) {
+        // 计算所有帖子的点赞总数
+        let totalLikes = 0;
+        result.posts.forEach(post => {
+          totalLikes += (post.like_count || 0);
+        });
+        
+        // 更新页面显示
+        this.setData({ totalLikes });
+        console.log('计算得到的用户获赞总数:', totalLikes);
+        
+        // 同时更新本地存储的用户信息
+        const userInfo = this.data.userInfo;
+        userInfo.likes_count = totalLikes;
+        wx.setStorageSync('userInfo', userInfo);
+      }
+    } catch (err) {
+      console.error('计算获赞总数失败：', err);
+      wx.hideLoading();
+      
+      // 最终失败，使用0作为默认值
+      this.setData({ totalLikes: 0 });
     }
   },
 
@@ -285,7 +438,7 @@ Page({
       wx.clearStorageSync()
 
       // 导入API模块
-      const api = require('../../utils/api');
+      const api = require('../../utils/api/index');
       
       // 调用API进行登录
       const result = await api.user.login();
@@ -370,7 +523,7 @@ Page({
     const { avatarUrl } = e.detail
     try {
       // 导入API模块
-      const api = require('../../utils/api');
+      const api = require('../../utils/api/index');
       
       // 调用API更新用户头像
       const result = await api.user.updateUser({

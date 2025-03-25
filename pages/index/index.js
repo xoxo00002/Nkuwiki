@@ -7,7 +7,7 @@ let isFavoriting = false;  // 防止重复点击收藏按钮
 
 // 在文件顶部引入工具函数和API模块
 const util = require('../../utils/util');
-const api = require('../../utils/api');
+const api = require('../../utils/api/index');
 
 Page({
   data: {
@@ -80,6 +80,15 @@ Page({
   },
   onShow() {
     console.log('页面显示')
+    
+    // 检查是否需要刷新首页
+    if (app.globalData && app.globalData.needRefreshHomePage) {
+      console.log('检测到发布新帖，刷新首页')
+      // 重置刷新标志
+      app.globalData.needRefreshHomePage = false;
+      // 刷新帖子列表
+      this.loadPosts(true);
+    }
   },
   // 下拉刷新
   onPullDownRefresh() {
@@ -131,36 +140,77 @@ Page({
         console.log('第一条帖子的ID:', posts[0].id)
       }
 
-      // 处理帖子数据，格式化创建时间
+      // 处理帖子数据，仅进行必要的状态计算和时间格式化
       const processedPosts = posts.map(post => {
-        // 处理评论预览，确保评论内容中的方括号不会被误解析
-        const processedComments = (post.recent_comments || []).map(comment => {
-          const hasImage = comment.images && comment.images.length > 0;
-          // 安全处理评论内容，防止方括号被错误解析为图片
-          let content = comment.content;
-          if (content && content.includes('[')) {
-            // 替换可能导致问题的方括号文本
-            content = content.replace(/\[([^\]]*)\]/g, '「$1」');
+        // 解析字符串格式的JSON字段
+        try {
+          // 解析images字段
+          if (typeof post.images === 'string') {
+            post.images = JSON.parse(post.images || '[]');
+          } else if (!Array.isArray(post.images)) {
+            post.images = [];
           }
           
-          return {
-            ...comment,
-            content,
-            hasImage
-          };
-        });
+          // 过滤掉无效的图片URL，只保留有效的URL
+          if (Array.isArray(post.images)) {
+            post.images = post.images.filter(url => {
+              if (typeof url !== 'string' || url.trim() === '') {
+                return false;
+              }
+              // 只保留有效格式的URL
+              return url.startsWith('cloud://') || url.startsWith('http://') || url.startsWith('https://');
+            });
+          }
+          
+          // 解析tags字段
+          if (typeof post.tags === 'string') {
+            post.tags = JSON.parse(post.tags || '[]');
+          } else if (!Array.isArray(post.tags)) {
+            post.tags = [];
+          }
+          
+          // 解析liked_users字段
+          if (typeof post.liked_users === 'string') {
+            post.liked_users = JSON.parse(post.liked_users || '[]');
+          } else if (!Array.isArray(post.liked_users)) {
+            post.liked_users = [];
+          }
+          
+          // 解析favorite_users字段
+          if (typeof post.favorite_users === 'string') {
+            post.favorite_users = JSON.parse(post.favorite_users || '[]');
+          } else if (!Array.isArray(post.favorite_users)) {
+            post.favorite_users = [];
+          }
+        } catch (err) {
+          console.error('解析帖子JSON字段失败:', err, post);
+          // 保证字段为数组类型，避免渲染错误
+          post.images = Array.isArray(post.images) ? post.images : [];
+          post.tags = Array.isArray(post.tags) ? post.tags : [];
+          post.liked_users = Array.isArray(post.liked_users) ? post.liked_users : [];
+          post.favorite_users = Array.isArray(post.favorite_users) ? post.favorite_users : [];
+        }
         
+        // 处理评论预览中的 [] 内容，防止被识别为图片标记
+        if (post.recent_comments && post.recent_comments.length > 0) {
+          post.recent_comments = post.recent_comments.map(comment => {
+            // 安全处理评论内容，防止方括号被错误解析为图片
+            if (comment.content && comment.content.includes('[')) {
+              // 替换可能导致问题的方括号文本
+              comment.content = comment.content.replace(/\[([^\]]*)\]/g, '「$1」');
+            }
+            return comment;
+          });
+        }
+        
+        // 只添加必要的计算字段，尽量保留原始字段名
         return {
           ...post,
-          _id: post.id,  // 兼容旧代码
-          createTime: this.formatTimeDisplay(post.create_time || post.createTime),
+          // 格式化创建时间用于显示
+          create_time_formatted: this.formatTimeDisplay(post.create_time),
+          // 计算点赞和收藏状态
           isLiked: OPENID ? post.liked_users?.includes(OPENID) : false,
           isFavorited: OPENID ? post.favorite_users?.includes(OPENID) : false,
-          commentCount: post.comment_count || 0,
-          likes: post.like_count || 0,
-          favoriteCounts: post.favorite_count || 0,
-          // 使用处理过的评论预览
-          commentPreview: processedComments
         };
       });
 
@@ -185,11 +235,49 @@ Page({
   },
   // 添加图片预览功能
   previewImage(e) {
-    const { urls, current } = e.currentTarget.dataset
-    wx.previewImage({
-      urls,
-      current
-    })
+    try {
+      const { urls, current } = e.currentTarget.dataset
+      
+      if (!urls || !urls.length) {
+        console.error('预览图片失败：无效的图片URL数组');
+        return;
+      }
+      
+      // 过滤掉无效URL，防止预览失败
+      const validUrls = urls.filter(url => url && typeof url === 'string' && url.trim() !== '');
+      
+      if (validUrls.length === 0) {
+        console.error('预览图片失败：所有URL都无效');
+        return;
+      }
+      
+      // 确保current是有效的URL
+      let validCurrent = current;
+      if (!validUrls.includes(current)) {
+        validCurrent = validUrls[0];
+        console.log('当前图片URL无效，使用第一张有效图片代替');
+      }
+      
+      console.log(`预览图片: ${validCurrent}, 总共 ${validUrls.length} 张`);
+      
+      wx.previewImage({
+        urls: validUrls,
+        current: validCurrent,
+        fail: err => {
+          console.error('图片预览失败:', err);
+          wx.showToast({
+            title: '图片预览失败',
+            icon: 'none'
+          });
+        }
+      })
+    } catch (err) {
+      console.error('图片预览出错:', err);
+      wx.showToast({
+        title: '图片预览出错',
+        icon: 'none'
+      });
+    }
   },
   // 格式化时间显示
   formatTimeDisplay(dateStr) {
@@ -279,11 +367,11 @@ Page({
 
       // 立即更新UI状态，提供即时反馈
       const newIsLiked = !currentPost.isLiked
-      const newLikes = currentPost.likes + (newIsLiked ? 1 : -1)
+      const newLikes = currentPost.like_count + (newIsLiked ? 1 : -1)
 
       this.setData({
         [`posts[${index}].isLiked`]: newIsLiked,
-        [`posts[${index}].likes`]: newLikes
+        [`posts[${index}].like_count`]: newLikes
       })
 
       // 调用API模块并添加详细日志
@@ -302,7 +390,7 @@ Page({
         // 如果失败，回滚UI状态
         this.setData({
           [`posts[${index}].isLiked`]: currentPost.isLiked,
-          [`posts[${index}].likes`]: currentPost.likes
+          [`posts[${index}].like_count`]: currentPost.like_count
         })
         throw new Error(result?.message || '操作失败')
       }
@@ -340,11 +428,27 @@ Page({
     }
   },
   onAvatarError(e) {
-    const index = e.currentTarget.dataset.index;
-    this.setData({
-      [`posts[${index}].authorAvatar`]: '/assets/icons/default-avatar.png'
-    });
-    console.log(`头像 ${index} 加载失败，已替换为默认头像`);
+    try {
+      const index = e.currentTarget.dataset.index;
+      if (index === undefined) {
+        console.error('头像加载失败，但未提供索引');
+        return;
+      }
+      
+      // 获取当前帖子信息并记录日志
+      const post = this.data.posts[index];
+      console.error(`头像加载失败 - 索引: ${index}, 原始URL: ${post ? post.avatar : '未知'}`);
+      
+      // 设置本地默认头像
+      const defaultAvatarPath = '/assets/icons/default-avatar.png';
+      console.log(`替换为默认头像: ${defaultAvatarPath}`);
+      
+      this.setData({
+        [`posts[${index}].avatar`]: defaultAvatarPath
+      });
+    } catch (err) {
+      console.error('处理头像错误时发生异常:', err);
+    }
   },
   // 显示评论输入框
   showCommentInput(e) {
@@ -443,11 +547,6 @@ Page({
     wx.showLoading({ title: '发送中...' });
 
     try {
-      // 从本地获取用户信息
-      const userInfo = wx.getStorageSync('userInfo') || {};
-      const userName = userInfo.nickName || '用户';
-      const userAvatar = userInfo.avatarUrl || '/assets/icons/default-avatar.png';
-
       // 先上传图片(如果有)
       let imageUrls = [];
       if (hasImages) {
@@ -470,38 +569,30 @@ Page({
 
       if (result && result.success) {
         console.log("新添加的评论:", result.comment);
-        console.log("对比用户信息 - 本地:", userName, "评论中:", result.comment.authorName);
 
         // 更新本地数据
         let posts = this.data.posts;
-        if (!posts[this.data.currentPostIndex].comments) {
-          posts[this.data.currentPostIndex].comments = [];
+        const currentPost = posts[this.data.currentPostIndex];
+        
+        // 确保recent_comments数组存在
+        if (!currentPost.recent_comments) {
+          currentPost.recent_comments = [];
         }
 
-        // 添加新评论
-        posts[this.data.currentPostIndex].comments.push(result.comment);
+        // 添加新评论到评论预览（保持最新3条）
+        // 处理评论内容中的方括号
+        const newComment = {...result.comment};
+        if (newComment.content && newComment.content.includes('[')) {
+          newComment.content = newComment.content.replace(/\[([^\]]*)\]/g, '「$1」');
+        }
+        
+        currentPost.recent_comments.unshift(newComment);
+        if (currentPost.recent_comments.length > 3) {
+          currentPost.recent_comments = currentPost.recent_comments.slice(0, 3);
+        }
 
         // 更新评论计数
-        if (!posts[this.data.currentPostIndex].commentCount) {
-          posts[this.data.currentPostIndex].commentCount = 0;
-        }
-        posts[this.data.currentPostIndex].commentCount += 1;
-
-        // 更新评论预览
-        if (!posts[this.data.currentPostIndex].commentPreview) {
-          posts[this.data.currentPostIndex].commentPreview = [];
-        }
-
-        // 添加到评论预览（保持最新3条）
-        const newComment = {
-          ...result.comment,
-          hasImage: imageUrls.length > 0
-        };
-
-        posts[this.data.currentPostIndex].commentPreview.unshift(newComment);
-        if (posts[this.data.currentPostIndex].commentPreview.length > 3) {
-          posts[this.data.currentPostIndex].commentPreview = posts[this.data.currentPostIndex].commentPreview.slice(0, 3);
-        }
+        currentPost.comment_count = (currentPost.comment_count || 0) + 1;
 
         this.setData({
           posts: posts,
@@ -510,7 +601,7 @@ Page({
           showCommentInput: false
         });
 
-        console.log("评论已添加到本地数据，帖子现在的评论数:", posts[this.data.currentPostIndex].comments.length);
+        console.log("评论已添加到本地数据，帖子现在的评论数:", currentPost.comment_count);
 
         wx.hideLoading();
         wx.showToast({ title: '评论成功', icon: 'success' });
@@ -612,11 +703,11 @@ Page({
 
       // 立即更新UI状态
       const newIsFavorited = !currentPost.isFavorited
-      const newFavouriteCounts = currentPost.favoriteCounts + (newIsFavorited ? 1 : -1);
+      const newFavoriteCount = currentPost.favorite_count + (newIsFavorited ? 1 : -1);
 
       this.setData({
         [`posts[${index}].isFavorited`]: newIsFavorited,
-        [`posts[${index}].favoriteCounts`]: newFavouriteCounts
+        [`posts[${index}].favorite_count`]: newFavoriteCount
       });
 
       // 使用API模块收藏/取消收藏
@@ -636,7 +727,7 @@ Page({
         // 如果失败，回滚UI状态
         this.setData({
           [`posts[${index}].isFavorited`]: currentPost.isFavorited,
-          [`posts[${index}].favoriteCounts`]: currentPost.favoriteCounts
+          [`posts[${index}].favorite_count`]: currentPost.favorite_count
         })
         throw new Error(result?.message || '操作失败')
       }
@@ -668,5 +759,116 @@ Page({
       // 解除标志
       this.setData({ isFavoriting: false })
     }
-  }
+  },
+  // 处理帖子图片加载错误
+  onPostImageError(e) {
+    try {
+      const postIndex = e.currentTarget.dataset.postIndex;
+      const imageIndex = e.currentTarget.dataset.imageIndex;
+      
+      if (postIndex === undefined || imageIndex === undefined) {
+        console.error('图片加载失败，但未提供完整索引信息');
+        return;
+      }
+      
+      // 获取当前帖子和图片信息
+      const post = this.data.posts[postIndex];
+      if (!post || !post.images) {
+        console.error('找不到帖子或图片数组');
+        return;
+      }
+      
+      // 记录错误日志
+      const imageUrl = post.images[imageIndex] || '未知';
+      console.error(`帖子图片加载失败 - 帖子索引: ${postIndex}, 图片索引: ${imageIndex}, URL: ${imageUrl}`);
+      
+      // 检查图片URL是否是有效的URL格式
+      let isValidUrl = false;
+      try {
+        if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
+          // 检查是否是cloud://开头的云存储URL或http/https URL
+          if (imageUrl.startsWith('cloud://') || imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+            isValidUrl = true;
+          }
+        }
+      } catch (err) {
+        console.error('检查图片URL有效性出错:', err);
+      }
+      
+      // 如果是无效URL，直接从数组中移除
+      if (!isValidUrl) {
+        console.error('检测到无效的图片URL，移除:', imageUrl);
+        const newImages = [...post.images];
+        newImages.splice(imageIndex, 1);
+        
+        this.setData({
+          [`posts[${postIndex}].images`]: newImages
+        });
+        
+        console.log(`已移除无效格式的图片URL`);
+      } else {
+        // 有效URL但加载失败，从数组中移除
+        const newImages = [...post.images];
+        newImages.splice(imageIndex, 1);
+        
+        this.setData({
+          [`posts[${postIndex}].images`]: newImages
+        });
+        
+        console.log(`已移除加载失败的图片`);
+      }
+    } catch (err) {
+      console.error('处理帖子图片错误时发生异常:', err);
+    }
+  },
+  // 处理评论图片加载错误
+  onCommentImageError(e) {
+    try {
+      const postIndex = e.currentTarget.dataset.postIndex;
+      const commentIndex = e.currentTarget.dataset.commentIndex;
+      const imageIndex = e.currentTarget.dataset.imageIndex;
+      
+      if (postIndex === undefined || commentIndex === undefined || imageIndex === undefined) {
+        console.error('评论图片加载失败，但未提供完整索引信息');
+        return;
+      }
+      
+      // 获取当前帖子、评论和图片信息
+      const post = this.data.posts[postIndex];
+      if (!post) {
+        console.error('找不到帖子');
+        return;
+      }
+      
+      // 找到对应的评论
+      const recentComments = post.recent_comments || [];
+      if (!recentComments || !recentComments[commentIndex]) {
+        console.error('找不到评论');
+        return;
+      }
+      
+      const comment = recentComments[commentIndex];
+      if (!comment.images || !comment.images[imageIndex]) {
+        console.error('找不到评论图片');
+        return;
+      }
+      
+      // 记录错误日志
+      const imageUrl = comment.images[imageIndex] || '未知';
+      console.error(`评论图片加载失败 - 帖子索引: ${postIndex}, 评论索引: ${commentIndex}, 图片索引: ${imageIndex}, URL: ${imageUrl}`);
+      
+      // 从图片数组中移除错误的图片
+      const newImages = [...comment.images];
+      newImages.splice(imageIndex, 1);
+      
+      // 更新图片数组
+      this.setData({
+        [`posts[${postIndex}].recent_comments[${commentIndex}].images`]: newImages
+      });
+      
+      console.log(`已移除错误的评论图片`);
+    } catch (err) {
+      console.error('处理评论图片错误时发生异常:', err);
+    }
+  },
 })
