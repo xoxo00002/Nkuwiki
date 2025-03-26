@@ -352,23 +352,24 @@
 }
 
 /**内置元素**/
-.h2w-image, .h2w-video {
+image,video {
     max-width: 100%;
 }
 
-.h2w__main .h2w-video {
+
+.h2w__main video {
     width:100%; margin: 10rpx auto;
 }
 
-.h2w__main .h2w-image {
+.h2w__main image {
     height:auto; vertical-align:middle;
 }
 
-.h2w__main .h2w-image{
+.h2w__main image{
     border-radius:12rpx;
 }
 
-.h2w__main .h2w-video {
+.h2w__main video {
     height:220px; font-size:0;
 }
 

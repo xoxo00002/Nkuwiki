@@ -26,6 +26,7 @@ Component({
   },
   observers: {
     textId: function (newVal) {
+      console.log('typable-text接收到ID:', newVal, '文本内容:', this.data.text);
       if (this.data.hasInitCb == false) {
         this.data.hasInitCb = true;
         this.initCb();
@@ -34,13 +35,14 @@ Component({
   },
   lifetimes: {
     attached: function () {
+      console.log('typable-text组件attached, ID:', this.data.textId, '文本:', this.data.text);
       if (this.data.hasInitCb == false) {
         this.data.hasInitCb = true;
         this.initCb();
       }
     },
     ready: function () {
-      // console.log("普通text中的ready")
+      console.log('typable-text组件ready, ID:', this.data.textId, '是否是最后叶节点:', this.data.hasLastLeafNode);
       if (this.data.hasLastLeafNode) {
         this.startTraverse();
       }
@@ -55,7 +57,7 @@ Component({
   },
   methods: {
     show() {
-      // console.log("遍历text》》》》》》")
+      console.log("显示文本节点, ID:", this.data.textId, "文本:", this.data.text);
       this.data.isShow = true;
       this.setData({ isShow: this.data.isShow });
     },
@@ -67,14 +69,31 @@ Component({
         curLastLeafNodeId,
         openTyper,
       } = require("../typer");
+      
+      console.log('初始化打字回调, ID:', newVal, '是否启用打字机:', openTyper.value, '最后节点ID:', curLastLeafNodeId.value);
+      
       if (newVal && openTyper.value) {
-        typeShowCbMap.value[newVal] = (resolve) => {
-          this.show();
-          this.startTyping(resolve);
-        };
-        if (newVal == curLastLeafNodeId.value) {
-          console.log("333333333333333333333");
-          this.data.hasLastLeafNode = true;
+        // 只有当文本非空时才注册打字回调
+        if (this.data.text && this.data.text.trim()) {
+          typeShowCbMap.value[newVal] = (resolve) => {
+            this.show();
+            this.startTyping(resolve);
+          };
+          
+          if (newVal == curLastLeafNodeId.value) {
+            console.log("匹配到最后一个节点:", newVal);
+            this.data.hasLastLeafNode = true;
+          }
+        } else {
+          // 对于空文本节点，直接显示并立即完成
+          console.log("空文本节点，直接完成:", newVal);
+          this.data.isShow = true;
+          this.setData({ isShow: this.data.isShow });
+          if (newVal == curLastLeafNodeId.value) {
+            console.log("空文本节点是最后一个节点，开始遍历:", newVal);
+            this.data.hasLastLeafNode = true;
+            this.startTraverse();
+          }
         }
       }
     },
@@ -104,14 +123,25 @@ Component({
           scrollTimer.value = setInterval(() => {
             if (Date.now() - lastScrollTime.value > 600) {
               console.log("定时器驱动滚动了一下");
-              scrollCb.value();
+              if (scrollCb.value) {
+                scrollCb.value();
+              }
             }
           }, 200);
         },0
       );
     },
     startTyping(resolve) {
+      console.log("开始打字效果, 文本:", this.data.text);
       this.clearTimer();
+      
+      // 如果文本为空，直接完成
+      if (!this.data.text || this.data.text.length === 0) {
+        console.log("文本为空，跳过打字");
+        if (resolve) resolve();
+        return;
+      }
+      
       let index = 0;
       this.setData({ currentText: "" });
       this.data.timer = setInterval(() => {
@@ -122,7 +152,7 @@ Component({
           index++;
         } else {
           this.clearTimer();
-          resolve();
+          if (resolve) resolve();
         }
       }, this.data.speed);
     },
