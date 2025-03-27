@@ -72,7 +72,7 @@ Page({
     textContent: '',  // 存储纯文本内容
     richTextContent: null,  // 存储美化后的文本内容
     enableTyper: true,  // 打字机效果始终开启
-    typerSpeed: 50,  // 打字机速度，值越小速度越快
+    typerSpeed: 20,  // 打字机速度，值越小速度越快
     requestTask: null, // 存储请求任务，用于取消请求
   },
 
@@ -180,7 +180,7 @@ Page({
           theme: 'light',
           typer: {
             enable: true,  // 直接硬编码为true
-            speed: 50,     // 速度设为合适的值
+            speed: 20,     // 加快速度
             delay: 100,
             showCursor: true,
             skippable: ['table', 'pre', 'code', 'image']
@@ -217,8 +217,8 @@ Page({
           theme: 'light',
           typer: {
             enable: true,  // 直接硬编码为true
-            speed: 200,    // 速度放慢一点便于观察
-            delay: 500,    // 延迟长一点，确保能看到效果
+            speed: 20,     // 速度设为较快
+            delay: 100,    // 减少延迟
             showCursor: true
           }
         });
@@ -591,7 +591,7 @@ Page({
     // 确保打字机配置正确初始化
     this.setData({
       enableTyper: true,  // 确保打字机效果开启
-      typerSpeed: 50      // 设置适中的速度
+      typerSpeed: 20      // 设置适中的速度
     });
     
     // 如果从其他页面跳转过来并携带参数
