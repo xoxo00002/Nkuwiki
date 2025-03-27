@@ -15,7 +15,8 @@ exports.main = async (event, context) => {
     content: event.content,
     openid: openid
   })
-  
+
+
   if (!event.postId) {
     return {
       success: false,
@@ -130,7 +131,39 @@ exports.main = async (event, context) => {
         comments: _.push(comment)
       }
     })
-    
+
+    const postQuery = await db.collection('posts').where({
+      _id: event.postId
+    }).get();
+
+    var re;
+    var users;
+    var result;
+
+    await db.collection("notification").doc(postQuery.data[0].authorOpenId).get()
+        .then(async res => {
+          re = res;
+          for(let i = 0; i<res.data.posts.length; i++) {
+            if (res.data.posts[i].postId === event.postId && res.data._id !== wxContext.OPENID) {
+              users = {
+                openid: openid,
+                commentTime: new Date().getTime(),
+                postTitle: postQuery.data[0].title,
+                commentContent: event.content
+              }
+              result = await db.collection("notification").doc(postQuery.data[0].authorOpenId).update({
+                data:{
+                  isRead: false,
+                  [`posts.${i}.comments`]: _.push(users)
+                }
+              });
+            }
+          }
+        })
+        .catch(err => {
+          console.log("更新评论人员openid失败")
+        });
+
     console.log('评论添加结果:', updateResult);
     
     if (!updateResult.stats || updateResult.stats.updated !== 1) {
@@ -142,7 +175,11 @@ exports.main = async (event, context) => {
     
     return {
       success: true,
-      comment: comment
+      comment: comment,
+      post: postQuery,
+      res: re,
+      user: users,
+      result: result
     }
   } catch (err) {
     console.error('添加评论出错:', err);

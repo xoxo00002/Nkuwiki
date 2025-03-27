@@ -19,6 +19,6 @@
     "ignoreDevUnusedFiles": true,
     "bigPackageSizeSupport": true
   },
-  "libVersion": "trial",
+  "libVersion": "3.7.9",
   "condition": {}
 }

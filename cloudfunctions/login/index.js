@@ -37,6 +37,18 @@ exports.main = async (event, context) => {
         data: newUser
       })
 
+      //build up a new database to store notification
+      const newUserNotification = {
+        _id: cloud.getWXContext().OPENID,
+        isRead: true,
+        posts:[]
+      };
+
+      await db.collection("notification").add({
+        data: newUserNotification
+      });
+
+
       return {
         code: 0,
         data: {

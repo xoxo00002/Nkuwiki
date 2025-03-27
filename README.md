@@ -8,7 +8,7 @@
 
 ## 项目结构说明
 
-```plain text
+```plain
 project
 │
 ├── pages/ # 页面文件夹
@@ -21,6 +21,7 @@ project
 │   ├── discover/ # 发现页
 │   ├── profile/ # 个人中心
 │   ├── login/ # 登录页
+│   ├── notification/ #通知页
 │   └── post/ # 发帖页
 │
 ├── api/ # API接口封装
@@ -48,7 +49,7 @@ project
 ├── jsconfig.json # JavaScript配置文件
 └── .cursorrules # Cursor IDE配置文件
 
-```text
+```
 
 ## 重要文件说明
 
@@ -149,3 +150,4 @@ project
 4. 部分 API 仅在真机上可用
 
 5. 注意兼容性问题，特别是低版本
+```
