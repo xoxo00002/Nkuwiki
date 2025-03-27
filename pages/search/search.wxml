@@ -59,8 +59,8 @@
 			</scroll-view>
 			<!-- 美化的富文本内容 -->
 			<scroll-view scroll-y class="text-content" wx:else>
-				<towxml nodes="{{ richTextContent }}" />
-				<view wx:if="{{ isStreaming }}" class="typing-cursor"></view>
+				<towxml nodes="{{ richTextContent }}" openTyper="{{ true }}" speed="{{ 20 }}" />
+				<view wx:if="{{ isStreaming && !enableTyper }}" class="typing-cursor"></view>
 			</scroll-view>
 			<!-- 底部操作按钮 -->
 			<view class="result-actions">

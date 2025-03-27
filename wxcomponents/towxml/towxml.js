@@ -17,6 +17,10 @@ Component({
     },
   },
   observers: {
+    openTyper: function (newVal) {
+      const { openTyper } = require("./typer");
+      openTyper.value = newVal;
+    },
     nodes: function (newVal) {
       if (this.properties.openTyper) {
         const {
@@ -24,48 +28,37 @@ Component({
           curNodes,
           reset,
           renderStartTime,
+          openTyper
         } = require("./typer");
-        // 属性值变化时执行的逻辑
+        
+        openTyper.value = this.properties.openTyper;
+        
         if (newVal && newVal.id) {
           reset();
-          console.log("towxml中newVal.id的值", newVal.id, newVal);
-          curLastLeafNodeId.value = this.getLastLeafNodeId(newVal);
-          console.log("curLastLeafNodeId.value的值", curLastLeafNodeId.value);
+          const lastId = this.getLastLeafNodeId(newVal);
+          curLastLeafNodeId.value = lastId;
           curNodes.value = newVal;
           this.data.changeDecode = !this.data.changeDecode;
           this.setData({ changeDecode: this.data.changeDecode });
           renderStartTime.value = Date.now();
         }
       }
-    },
-    openTyper: function (newVal) {
-      const { openTyper } = require("./typer");
-      openTyper.value = newVal;
-      if (newVal) {
-        wx.showLoading({
-          title: "加载中",
-        });
-      }
-    },
+    }
   },
   lifetimes: {
+    created: function() {
+      const { openTyper } = require("./typer");
+      openTyper.value = this.properties.openTyper;
+    },
     attached: function () {
       const { openTyper } = require("./typer");
-      openTyper.value = this.data.openTyper;
+      openTyper.value = this.properties.openTyper;
       const { renderStartTime } = require("./typer");
       renderStartTime.value = Date.now();
-      wx.showLoading({
-        title: "加载中",
-      });
     },
     ready: function () {
-      console.log(
-        "towxml中的ready,看看在之前还是在之后",
-        this.properties.openTyper
-      );
-      // if (!this.properties.openTyper) {
-      //   wx.hideLoading();
-      // }
+      const { openTyper } = require("./typer");
+      openTyper.value = this.properties.openTyper;
     },
     detached: function () {
       const { reset } = require("./typer");
@@ -83,7 +76,18 @@ Component({
       if (!nodes.children || nodes.children.length == 0) {
         return nodes.id;
       } else {
-        const lastChild = nodes.children[nodes.children.length - 1];
+        const validChildren = nodes.children.filter(child => 
+          child && child.id !== undefined && 
+          child.id !== null && 
+          child.id !== "1.7976931348623157e+308" &&
+          !(child.type === "text" && (!child.text || child.text === ""))
+        );
+        
+        if (validChildren.length === 0) {
+          return nodes.id;
+        }
+        
+        const lastChild = validChildren[validChildren.length - 1];
         return this.getLastLeafNodeId(lastChild);
       }
     },

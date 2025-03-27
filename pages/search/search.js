@@ -2,6 +2,7 @@ const app = getApp()
 const config = app.globalData.config || {};
 const API_BASE_URL = config.services?.app?.base_url || 'https://nkuwiki.com';
 const towxml = require('../../wxcomponents/towxml/index');
+const api = require('../../utils/api/index');
 
 // 简单的Markdown解析函数
 function parseMarkdown(markdown) {
@@ -18,15 +19,14 @@ function parseMarkdown(markdown) {
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     
-    // 处理链接和图片，提升优先级
+    // 处理![title]()格式为标题超链接
     .replace(/!\[(.*?)\]\((.*?)\)/g, '<navigator url="/pages/webview/webview?url=$2" class="md-link">$1</navigator>')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '<navigator url="/pages/webview/webview?url=$2" class="md-link">$1</navigator>')
-    
-    // 处理数字编号列表，改进匹配方式
-    .replace(/^(\d+)[.、：:]\s*(.*?)$/gm, '<view class="md-li"><text class="md-li-num">$1.</text> $2</view>')
     
     // 无序列表
-    .replace(/^\s*[-*+•]\s+(.*?)$/gm, '<view class="md-li">• $1</view>')
+    .replace(/^\s*[-*+]\s+(.*?)$/gm, '<view class="md-li">• $1</view>')
+    
+    // 有序列表 
+    .replace(/^\s*(\d+)\.\s+(.*?)$/gm, '<view class="md-li"><text class="md-li-num">$1.</text> $2</view>')
     
     // 代码块
     .replace(/```([\s\S]*?)```/g, '<view class="md-code">$1</view>')
@@ -41,7 +41,7 @@ function parseMarkdown(markdown) {
     .replace(/^---$/gm, '<view class="md-hr"></view>')
     
     // 段落
-    .replace(/\n\n/g, '</view><view class="md-p">');
+    .replace(/\n\n/g, '</view><view class="md-p">')
   
   // 确保段落包裹
   html = '<view class="md-p">' + html + '</view>';
@@ -70,78 +70,10 @@ Page({
     _lastMarkdownHtml: '',
     usePlainText: false,  // 是否使用纯文本模式（不使用富文本渲染）
     textContent: '',  // 存储纯文本内容
-    richTextContent: null  // 存储美化后的文本内容
-  },
-
-  // 简单高效的Markdown转HTML函数
-  simpleMarkdownToHtml: function(markdown) {
-    if (!markdown) return '<view class="md-p"></view>';
-    
-    // 预处理换行和空行
-    let text = markdown.trim().replace(/\r\n/g, '\n');
-    
-    // 添加结束标记，以便于正则匹配
-    text += '\n';
-    
-    // 识别数字编号列表
-    text = text.replace(/^(\d+)[.、：:]\s*(.*?)$/gm, 
-      '<view class="md-li"><text class="md-li-num">$1.</text> $2</view>');
-    
-    // 识别无序列表
-    text = text.replace(/^\s*[-*+•]\s+(.*?)$/gm, 
-      '<view class="md-li">• $1</view>');
-    
-    // 处理链接 [文本](链接)
-    text = text.replace(/\[(.*?)\]\((.*?)\)/g, 
-      '<navigator url="/pages/webview/webview?url=$2" class="md-link">$1</navigator>');
-    
-    // 处理标题 - 从h3到h1
-    text = text.replace(/^### (.*?)$/gm, '<view class="md-h3">$1</view>');
-    text = text.replace(/^## (.*?)$/gm, '<view class="md-h2">$1</view>');
-    text = text.replace(/^# (.*?)$/gm, '<view class="md-h1">$1</view>');
-    
-    // 处理粗体和斜体
-    text = text.replace(/\*\*(.*?)\*\*/g, '<text class="md-bold">$1</text>');
-    text = text.replace(/\*(.*?)\*/g, '<text class="md-italic">$1</text>');
-    
-    // 处理单行代码
-    text = text.replace(/`(.*?)`/g, '<text class="md-code-inline">$1</text>');
-    
-    // 处理代码块
-    text = text.replace(/```([\s\S]*?)```/g, '<view class="md-code-block">$1</view>');
-    
-    // 处理引用
-    text = text.replace(/^> (.*?)$/gm, '<view class="md-quote">$1</view>');
-    
-    // 处理分隔线
-    text = text.replace(/^-{3,}$/gm, '<view class="md-hr"></view>');
-    
-    // 将剩余的文本行转换为段落
-    const paragraphs = [];
-    let currentP = '';
-    
-    text.split('\n').forEach(line => {
-      if (line.trim() === '') {
-        if (currentP) {
-          paragraphs.push(`<view class="md-p">${currentP}</view>`);
-          currentP = '';
-        }
-      } else if (!line.startsWith('<view') && !line.startsWith('<text') && !line.startsWith('<navigator')) {
-        currentP += (currentP ? ' ' : '') + line;
-      } else {
-        if (currentP) {
-          paragraphs.push(`<view class="md-p">${currentP}</view>`);
-          currentP = '';
-        }
-        paragraphs.push(line);
-      }
-    });
-    
-    if (currentP) {
-      paragraphs.push(`<view class="md-p">${currentP}</view>`);
-    }
-    
-    return paragraphs.join('');
+    richTextContent: null,  // 存储美化后的文本内容
+    enableTyper: true,  // 打字机效果始终开启
+    typerSpeed: 20,  // 打字机速度，值越小速度越快
+    requestTask: null, // 存储请求任务，用于取消请求
   },
 
   // 处理输入框变化
@@ -157,20 +89,17 @@ Page({
       usePlainText: !this.data.usePlainText
     }, () => {
       // 如果已有内容，重新渲染
-      if (this.data.textContent) {
+      if (this.data.fullResponse) {
         if (this.data.usePlainText) {
           this.setData({
-            richTextContent: null, // 清空富文本内容
             markdownHtml: '' // 清空markdown以便显示纯文本
           });
         } else {
-          // 重新生成markdown并更新富文本
-          const markdownHtml = this.simpleMarkdownToHtml(this.data.textContent);
+          // 重新生成markdown
+          const markdownHtml = parseMarkdown(this.data.fullResponse);
           this.setData({
             markdownHtml: markdownHtml
           });
-          // 同时更新富文本渲染
-          this.formatRichTextContent(this.data.textContent);
         }
       }
       
@@ -220,17 +149,192 @@ Page({
       return;
     }
 
+    // 取消现有请求
+    if (this.data.requestTask) {
+      this.data.requestTask.abort();
+    }
+
     this.setData({
       textContent: '',  // 清空之前的内容
-      richTextContent: null, // 清空富文本内容
+      richTextContent: null, // 清除之前的富文本内容
       loading: true,
       isStreaming: false // 不立即显示流式状态，避免出现"正在生成"
     });
 
     console.log(`开始搜索: ${searchValue}`);
     
-    // 发起流式搜索请求
-    this.startSimpleStream(searchValue);
+    // 添加一个调试选项，显示固定内容用于测试打字机效果
+    if (searchValue === 'test') {
+      console.log('使用测试内容');
+      const testContent = "# 测试标题\n\n这是一段测试文字，用于测试打字机效果。\n\n## 二级标题\n\n* 列表项1\n* 列表项2\n* 列表项3\n\n";
+      this.setData({
+        textContent: testContent,
+        loading: false
+      });
+      
+      try {
+        // 一次性完整生成markdown内容
+        const result = towxml(testContent, 'markdown', {
+          theme: 'light',
+          typer: {
+            enable: true,  // 直接硬编码为true
+            speed: 20,     // 加快速度
+            delay: 100,
+            showCursor: true,
+            skippable: ['table', 'pre', 'code', 'image']
+          }
+        });
+        
+        // 处理表格和代码块的noType属性
+        this.handleNoTypeElements(result);
+        
+        this.setData({
+          richTextContent: result
+        });
+      } catch (error) {
+        console.error('处理测试内容失败:', error);
+      }
+      
+      return;
+    }
+    
+    // 测试超短内容
+    if (searchValue === 't') {
+      console.log('使用超短测试内容');
+      const testContent = "这是测试。";
+      this.setData({
+        textContent: testContent,
+        loading: false
+      });
+      
+      try {
+        // 一次性完整生成markdown内容
+        const result = towxml(testContent, 'markdown', {
+          theme: 'light',
+          typer: {
+            enable: true,  // 直接硬编码为true
+            speed: 20,     // 速度设为较快
+            delay: 100,    // 减少延迟
+            showCursor: true
+          }
+        });
+      
+        this.setData({
+          richTextContent: result
+        });
+      } catch (error) {
+        console.error('处理测试内容失败:', error);
+      }
+      
+      return;
+    }
+    
+    // 使用新的API发起流式请求
+    this.startChatWithAgent(searchValue);
+  },
+
+  // 使用agent API开始聊天
+  startChatWithAgent: function(query) {
+    const that = this;
+    
+    console.log('开始调用agent.chat API');
+    
+    // 初始化累积的响应文本
+    let accumulatedText = '';
+    let isFirstChunk = true;
+    
+    // 设置为正在流式响应状态
+    this.setData({
+      isStreaming: true
+    });
+    
+    // 调用agent API
+    api.agent.chat({
+      query: query,
+      stream: true,
+      format: 'markdown',
+      onMessage: function(content) {
+        // 处理第一个数据块的前导空行
+        if (isFirstChunk) {
+          content = content.replace(/^\s+/, '');
+          isFirstChunk = false;
+          
+          // 收到第一个数据块时，关闭loading
+          that.setData({
+            loading: false
+          });
+        }
+        
+        // 处理连续的空行，将多个空行替换为单个空行
+        content = content.replace(/\n\s*\n/g, '\n');
+        
+        // 更新累积文本
+        accumulatedText += content;
+        
+        // 确保整个文本中不会有多余的空行
+        const processedText = accumulatedText.replace(/\n\s*\n/g, '\n').trim();
+        
+        // 更新纯文本内容
+        that.setData({
+          textContent: processedText
+        });
+        
+        // 使用towxml处理富文本
+        if (!that.data.usePlainText) {
+          that.formatRichTextContent(processedText);
+        }
+      },
+      onError: function(error) {
+        console.error('流式请求错误:', error);
+        wx.showToast({
+          title: '请求失败: ' + (error.errMsg || '未知错误'),
+          icon: 'none'
+        });
+        that.setData({
+          loading: false,
+          isStreaming: false
+        });
+      },
+      onComplete: function() {
+        console.log('流式请求完成');
+        that.setData({
+          loading: false,
+          isStreaming: false,
+          fullResponse: accumulatedText
+        });
+        
+        // 保存会话历史
+        if (that.data.enableTyper && !that.data.usePlainText) {
+          that.saveChatHistory(query, accumulatedText);
+        }
+      }
+    }).then(result => {
+      if (result.success && result.requestTask) {
+        // 保存请求任务，以便能够取消
+        this.setData({
+          requestTask: result.requestTask
+        });
+      } else if (!result.success) {
+        wx.showToast({
+          title: result.message || '请求失败',
+          icon: 'none'
+        });
+        this.setData({
+          loading: false,
+          isStreaming: false
+        });
+      }
+    }).catch(error => {
+      console.error('API调用异常:', error);
+      wx.showToast({
+        title: '系统错误',
+        icon: 'none'
+      });
+      this.setData({
+        loading: false,
+        isStreaming: false
+      });
+    });
   },
 
   // 实时美化文本内容，识别链接、Email等
@@ -246,33 +350,26 @@ Page({
       let linkId = 0;
       
       // 临时替换链接为占位符
-      processedText = processedText.replace(/(\d+)[.、：:]\s*(.*?)[:：]\s*(https?:\/\/[^\s<]+)|(\d+)[.、：:]\s*(.*?)$|^(.*?)[:：]\s*(https?:\/\/[^\s<]+)$|(?<![(\[])(https?:\/\/[^\s<]+)(?![)\]])/gm, 
-        (match, num, title, url1, num2, title2, title3, url2, url3) => {
+      processedText = processedText.replace(/(\d+)\.\s*(.*?)[:：]\s*(https?:\/\/[^\s<]+)|^(.*?)[:：]\s*(https?:\/\/[^\s<]+)$|(?<![(\[])(https?:\/\/[^\s<]+)(?![)\]])/gm, 
+        (match, num, title, url1, title2, url2, url3) => {
           const placeholder = `__LINK_${linkId}__`;
           if (num && title && url1) {
-            // 数字编号的链接: "1. 标题: https://..."
+            // 数字编号的链接
             links.push({
-              type: 'numbered_url',
+              type: 'numbered',
               num,
               title: title.trim(),
               url: url1
             });
-          } else if (num2 && title2) {
-            // 数字编号无链接: "1. 标题"
-            links.push({
-              type: 'numbered',
-              num: num2,
-              title: title2.trim()
-            });
-          } else if (title3 && url2) {
-            // 标题: 链接格式 "标题: https://..."
+          } else if (title2 && url2) {
+            // 标题: 链接格式
             links.push({
               type: 'titled',
-              title: title3.trim(),
+              title: title2.trim(),
               url: url2
             });
           } else if (url3) {
-            // 单独的链接 "https://..."
+            // 单独的链接
             links.push({
               type: 'plain',
               url: url3
@@ -286,20 +383,23 @@ Page({
       // 将链接还原为Markdown格式
       links.forEach((link, index) => {
         const placeholder = `__LINK_${index}__`;
-        if (link.type === 'numbered_url') {
+        if (link.type === 'numbered') {
           processedText = processedText.replace(placeholder, 
-            `${link.num}. [${link.title}](${link.url})`);
-        } else if (link.type === 'numbered') {
-          processedText = processedText.replace(placeholder, 
-            `${link.num}. ${link.title}`);
+            `${link.num}. ![${link.title}](${link.url})`);
         } else if (link.type === 'titled') {
           processedText = processedText.replace(placeholder, 
-            `[${link.title}](${link.url})`);
+            `![${link.title}](${link.url})`);
         } else {
           processedText = processedText.replace(placeholder, 
             `[${link.url}](${link.url})`);
         }
       });
+      
+      // 为表格添加noType属性，让表格直接全部显示而不用逐字打出
+      processedText = processedText.replace(/(\|[^\n]*\|\n)(\|[^\n]*\|)/g, '<!--table-noType-->\n$1$2');
+      
+      // 如有代码块，也标记为不需要打字效果
+      processedText = processedText.replace(/```(.+?)```/gs, '<!--code-noType-->\n```$1```');
       
       // 使用 towxml 处理文本
       const result = towxml(processedText, 'markdown', {
@@ -309,6 +409,14 @@ Page({
         emoji: false,
         latex: false,
         highlight: false,
+        // 添加打字机配置
+        typer: {
+          enable: this.data.enableTyper,  // 是否启用打字机效果，确保传递这个属性
+          speed: this.data.typerSpeed,    // 使用data中的打字速度
+          delay: 100,                     // 初始延迟
+          showCursor: true,               // 显示光标
+          skippable: ['table', 'pre', 'code', 'image'] // 跳过打字效果的标签
+        },
         events: {
           tap: (e) => {
             // 处理链接点击
@@ -352,6 +460,9 @@ Page({
           }
         }
       });
+      
+      // 处理表格和代码块的noType属性
+      this.handleNoTypeElements(result);
 
       this.setData({
         richTextContent: result
@@ -369,193 +480,22 @@ Page({
       });
     }
   },
-
-  // 处理流式响应
-  startSimpleStream: function(query) {
-    const that = this;
+  
+  // 处理不需要打字效果的特殊元素
+  handleNoTypeElements: function(node) {
+    if (!node) return;
     
-    // 获取用户微信ID
-    const userInfo = wx.getStorageSync('userInfo') || {};
-    const openid = userInfo.openid || wx.getStorageSync('openid');
-    
-    // 构建请求数据
-    const requestData = {
-      query: query,
-      stream: true,  // 开启流式响应
-      format: 'text', // 直接请求纯文本
-      user_id: openid || 'default_user' // 使用用户的微信ID，如果没有则使用默认值
-    };
-
-    console.log('请求参数:', requestData);
-    console.log('请求URL:', `${API_BASE_URL}/agent/chat`);
-    
-    // 获取系统信息
-    let isDevTool = false;
-    try {
-      const appBaseInfo = wx.getAppBaseInfo();
-      isDevTool = appBaseInfo.platform === 'devtools';
-      console.log('系统环境:', appBaseInfo.platform);
-    } catch (e) {
-      console.warn('获取系统信息失败');
+    // 为表格和代码块添加noType属性
+    if (node.tag === 'table' || node.tag === 'pre') {
+      node.noType = true;
     }
     
-    // 初始化累积的响应文本
-    let accumulatedText = '';
-    let isFirstChunk = true;
-    
-    // 使用wx.request实现SSE
-    const requestTask = wx.request({
-      url: `${API_BASE_URL}/agent/chat`,
-      method: 'POST',
-      data: requestData,
-      header: {
-        'content-type': 'application/json',
-        'Accept': 'text/event-stream'
-      },
-      enableChunked: true, // 启用分块传输
-      responseType: 'arraybuffer',
-      success(res) {
-        console.log('请求成功初始化');
-      },
-      fail(err) {
-        console.error('请求失败:', err);
-        wx.showToast({
-          title: '网络请求失败',
-          icon: 'none'
-        });
-        that.setData({ loading: false, isStreaming: false });
-      },
-      complete() {
-        // 请求完成时（无论成功失败）都关闭加载状态
-        that.setData({ 
-          loading: false,
-          isStreaming: false 
-        });
+    // 递归处理所有子节点
+    if (node.children && node.children.length > 0) {
+      for (let child of node.children) {
+        this.handleNoTypeElements(child);
       }
-    });
-    
-    // 创建一个变量跟踪是否收到至少一个数据块
-    let receivedFirstChunk = false;
-    let responseComplete = false;
-    let totalChunks = 0;
-    
-    // 监听数据接收事件
-    requestTask.onChunkReceived(function(res) {
-      try {
-        totalChunks++;
-        
-        // 如果是第一个数据块，关闭loading，但不显示isStreaming状态
-        // 等待累积一定量的内容后再显示，避免"正在生成"的闪烁
-        if (!receivedFirstChunk) {
-          receivedFirstChunk = true;
-          that.setData({ 
-            loading: false
-          });
-        }
-        
-        // 将二进制数据转换为字符串
-        let text;
-        if (isDevTool) {
-          text = new TextDecoder('utf-8').decode(new Uint8Array(res.data));
-        } else {
-          text = String.fromCharCode.apply(null, new Uint8Array(res.data));
-        }
-        
-        // 检查是否是最后一个数据块
-        if (text.includes('"done":true') || text.includes('"done": true')) {
-          responseComplete = true;
-          that.setData({ 
-            isStreaming: false,
-            loading: false
-          });
-          return;
-        }
-        
-        // 处理数据
-        let content = '';
-        
-        // 处理SSE格式
-        if (text.includes('data:')) {
-          const matches = text.match(/data:\s*({.+?})/g) || [];
-          for (const match of matches) {
-            try {
-              const jsonStr = match.replace(/^data:\s*/, '');
-              const data = JSON.parse(jsonStr);
-              
-              if (data.content !== undefined) {
-                // 处理Unicode编码
-                if (typeof data.content === 'string' && data.content.includes('\\u')) {
-                  try {
-                    content += JSON.parse('"' + data.content.replace(/"/g, '\\"') + '"');
-                  } catch (e) {
-                    content += data.content;
-                  }
-                } else {
-                  content += data.content;
-                }
-              }
-            } catch (e) {
-              console.warn('解析数据失败:', e);
-            }
-          }
-        } else if (text.startsWith('{') && text.endsWith('}')) {
-          try {
-            const data = JSON.parse(text);
-            if (data.content !== undefined) {
-              content += data.content;
-            }
-          } catch (e) {
-            console.warn('解析JSON失败:', e);
-          }
-        } else {
-          content = text;
-        }
-        
-        // 更新累积的文本
-        if (content) {
-          // 处理第一个数据块的前导空行
-          if (isFirstChunk) {
-            content = content.replace(/^\s+/, '');
-            isFirstChunk = false;
-          }
-          
-          // 处理连续的空行，将多个空行替换为单个空行
-          content = content.replace(/\n\s*\n/g, '\n');
-          
-          accumulatedText += content;
-          
-          // 确保整个文本中不会有多余的空行
-          const processedText = accumulatedText.replace(/\n\s*\n/g, '\n').trim();
-          
-          // 设置文本内容
-          that.setData({
-            textContent: processedText
-          });
-          
-          // 当累积足够的内容或收到足够多的数据块时，才显示isStreaming
-          // 这样可以避免"正在生成"的短暂显示
-          if (totalChunks > 3 && processedText.length > 20 && !that.data.isStreaming) {
-            that.setData({
-              isStreaming: true
-            });
-          }
-          
-          // 处理富文本显示
-          if (!that.data.usePlainText) {
-            // 使用towxml处理富文本
-            that.formatRichTextContent(processedText);
-            
-            // 同时使用自定义Markdown渲染器生成HTML
-            const markdownHtml = that.simpleMarkdownToHtml(processedText);
-            that.setData({
-              markdownHtml: markdownHtml
-            });
-          }
-        }
-      } catch (error) {
-        console.error('处理数据失败:', error);
-      }
-    });
+    }
   },
 
   // 复制结果
@@ -591,108 +531,28 @@ Page({
   
   // 清空搜索结果
   clearResult() {
+    // 取消现有请求
+    if (this.data.requestTask) {
+      this.data.requestTask.abort();
+      this.setData({
+        requestTask: null
+      });
+    }
+    
     this.setData({
       textContent: '',
       richTextContent: null,
-      isStreaming: false
+      isStreaming: false,
+      fullResponse: ''
     });
   },
   
-  // 处理响应错误
-  handleResponseError: function(errorMsg) {
-    this.setData({
-      loading: false,
-      isStreaming: false
-    });
-    
-    wx.showToast({
-      title: errorMsg,
-      icon: 'none',
-      duration: 2000
-    });
-  },
-
   // 分享搜索结果
   shareResult: function() {
     // 在小程序中不能直接调用分享，需要用户点击右上角的分享按钮
     wx.showToast({
       title: '请点击右上角分享',
       icon: 'none'
-    });
-  },
-
-  // 反馈搜索结果
-  feedbackResult: function() {
-    wx.navigateTo({
-      url: '/pages/feedback/feedback?query=' + encodeURIComponent(this.data.searchValue)
-    });
-  },
-
-  // 打开来源链接
-  openSource: function(e) {
-    const source = e.currentTarget.dataset.source;
-    
-    if (!source) return;
-    
-    // 判断来源类型，处理不同来源的打开方式
-    if (source.startsWith('http')) {
-      // 提供更好的用户体验
-      wx.showActionSheet({
-        itemList: ['复制链接', '在浏览器中打开'],
-        success: function(res) {
-          if (res.tapIndex === 0) {
-            // 复制链接
-            wx.setClipboardData({
-              data: source,
-              success: function() {
-                wx.showToast({
-                  title: '链接已复制',
-                  icon: 'success'
-                });
-              }
-            });
-          } else if (res.tapIndex === 1) {
-            // 尝试通过webview页面打开链接
-            wx.navigateTo({
-              url: `/pages/webview/webview?url=${encodeURIComponent(source)}`,
-              fail: function() {
-                // 如果没有webview页面，则提示用户在浏览器打开
-                wx.setClipboardData({
-                  data: source,
-                  success: function() {
-                    wx.showModal({
-                      title: '链接已复制',
-                      content: '链接已复制到剪贴板，您可以在浏览器中打开',
-                      showCancel: false
-                    });
-                  }
-                });
-              }
-            });
-          }
-        }
-      });
-    } else {
-      // 其他类型资源，例如文件、文档等
-      wx.showToast({
-        title: '暂不支持打开此类资源',
-        icon: 'none'
-      });
-    }
-  },
-
-  // 导航到分类
-  navigateToCategory: function(e) {
-    const type = e.currentTarget.dataset.type;
-    wx.navigateTo({
-      url: '/pages/category/category?type=' + type
-    });
-  },
-
-  // 导航到贡献页
-  navigateToContribute: function() {
-    wx.navigateTo({
-      url: '/pages/contribute/contribute'
     });
   },
 
@@ -707,45 +567,6 @@ Page({
     }
   },
 
-  // 刷新新闻
-  refreshNews: function() {
-    wx.showLoading({
-      title: '刷新中...',
-    });
-    
-    // 模拟刷新操作
-    setTimeout(() => {
-      wx.hideLoading();
-      wx.showToast({
-        title: '刷新成功',
-        icon: 'success'
-      });
-    }, 1000);
-  },
-
-  // 打开新闻详情
-  openNewsDetail: function(e) {
-    const id = e.currentTarget.dataset.id;
-    wx.navigateTo({
-      url: '/pages/news/detail?id=' + id
-    });
-  },
-
-  // 查看更多热榜
-  viewMoreHot: function() {
-    wx.navigateTo({
-      url: '/pages/hot/list'
-    });
-  },
-
-  // 打开热榜详情
-  openHotDetail: function(e) {
-    const id = e.currentTarget.dataset.id;
-    wx.navigateTo({
-      url: '/pages/hot/detail?id=' + id
-    });
-  },
-
   // 用户点击右上角分享
   onShareAppMessage: function() {
     const query = this.data.searchValue;
@@ -756,6 +577,14 @@ Page({
   },
 
   onLoad: function(options) {
+    console.log('搜索页面加载, 打字机配置:', this.data.enableTyper, this.data.typerSpeed);
+
+    // 确保打字机配置正确初始化
+    this.setData({
+      enableTyper: true,  // 确保打字机效果开启
+      typerSpeed: 20      // 设置适中的速度
+    });
+    
     // 如果从其他页面跳转过来并携带参数
     if (options.query) {
       this.setData({
@@ -773,243 +602,10 @@ Page({
     if (this.data.typingTimer) {
       clearInterval(this.data.typingTimer);
     }
-  },
-
-  // 添加测试方法
-  testSSE: function() {
-    console.log('开始测试SSE流式响应');
-    // 使用一个容易跟踪的测试查询
-    const testQuery = "测试流式响应";
     
-    this.setData({
-      searchValue: testQuery,
-      loading: true,
-      isStreaming: true,
-      markdownHtml: '<view class="md-p">正在测试流式响应...</view>',
-      fullResponse: '',
-      searchResults: []
-    });
-    
-    // 直接调用流式请求方法
-    this.startChatStream(testQuery);
-    
-    // 延迟2秒后再启动本地测试，避免与实际请求混淆
-    setTimeout(() => {
-      // 仅当实际接口没有返回数据时才启动本地测试
-      if (!this.data.fullResponse || this.data.fullResponse.length === 0) {
-        console.log('实际请求无数据返回，启动本地测试');
-        this.testLocalStream();
-      }
-    }, 2000);
-  },
-  
-  // 本地测试流式数据处理
-  testLocalStream: function() {
-    console.log('开始本地流式测试');
-    const that = this;
-    
-    // 模拟的数据块，包含Unicode示例
-    const mockChunks = [
-      'data: {"content": "测"}',
-      'data: {"content": "\\u8bd5"}', // "试"的Unicode
-      'data: {"content": "流"}',
-      'data: {"content": "\\u5f0f"}', // "式"的Unicode
-      'data: {"content": "响"}',
-      'data: {"content": "应"}',
-      'data: {"content": "\\n"}',      // 换行符
-      'data: {"content": "1"}',
-      'data: {"content": "\\n"}',
-      'data: {"content": "2"}',
-      'data: {"content": "\\n"}',
-      'data: {"content": "3"}'
-    ];
-    
-    // 清空当前响应，以便测试
-    that.setData({
-      fullResponse: '',
-      markdownHtml: '',
-      searchResults: []
-    });
-    
-    let index = 0;
-    let localResponse = '';
-    
-    // 模拟数据块逐个接收
-    const interval = setInterval(() => {
-      if (index >= mockChunks.length) {
-        clearInterval(interval);
-        console.log('本地测试完成，最终响应:', localResponse);
-        
-        // 测试结束后，切换到纯文本模式以便查看结果
-        setTimeout(() => {
-          if (!that.data.usePlainText) {
-            that.togglePlainTextMode();
-          }
-        }, 1000);
-        
-        return;
-      }
-      
-      // 获取当前数据块
-      const chunk = mockChunks[index++];
-      console.log('模拟接收数据:', chunk);
-      
-      try {
-        // 解析数据块
-        if (chunk.includes('data:')) {
-          const jsonStr = chunk.replace(/^data:\s*/, '');
-          const data = JSON.parse(jsonStr);
-          if (data.content !== undefined) {
-            // 处理Unicode
-            let content = data.content;
-            if (typeof content === 'string' && content.includes('\\u')) {
-              try {
-                content = JSON.parse('"' + content.replace(/"/g, '\\"') + '"');
-                console.log('解码Unicode后:', content);
-              } catch (err) {
-                console.warn('Unicode解码失败:', err);
-              }
-            }
-            
-            localResponse += content;
-            
-            // 更新界面
-            const html = that.simpleMarkdownToHtml(localResponse);
-            that.setData({
-              fullResponse: localResponse,
-              searchResults: [localResponse],
-              markdownHtml: html,
-              isStreaming: true
-            });
-            
-            console.log('本地测试更新响应:', localResponse);
-          }
-        }
-      } catch (error) {
-        console.error('本地测试解析错误:', error);
-      }
-    }, 500); // 每500ms发送一个数据块
-  },
-
-  // 处理上传文件
-  uploadFile() {
-    wx.chooseMessageFile({
-      count: 1,
-      type: 'file',
-      success: (res) => {
-        const tempFilePath = res.tempFiles[0].path;
-        const fileName = res.tempFiles[0].name;
-        
-        wx.showLoading({
-          title: '正在上传...',
-        });
-        
-        // 这里可以实现实际的文件上传逻辑
-        console.log('选择的文件:', fileName);
-        console.log('文件路径:', tempFilePath);
-        
-        // 模拟上传过程
-        setTimeout(() => {
-          wx.hideLoading();
-          wx.showToast({
-            title: '文件已上传',
-            icon: 'success'
-          });
-          
-          // 可以根据需要处理上传后的逻辑
-          this.setData({
-            searchValue: `已上传: ${fileName}`
-          });
-        }, 1500);
-      },
-      fail: (err) => {
-        console.error('选择文件失败:', err);
-        wx.showToast({
-          title: '选择文件失败',
-          icon: 'none'
-        });
-      }
-    });
-  },
-  
-  // 开始语音搜索
-  startVoiceSearch() {
-    // 检查是否支持录音
-    wx.getSetting({
-      success: (res) => {
-        if (!res.authSetting['scope.record']) {
-          wx.authorize({
-            scope: 'scope.record',
-            success: () => {
-              this.beginVoiceRecognition();
-            },
-            fail: () => {
-              wx.showToast({
-                title: '需要录音权限',
-                icon: 'none'
-              });
-            }
-          });
-        } else {
-          this.beginVoiceRecognition();
-        }
-      }
-    });
-  },
-  
-  // 开始语音识别
-  beginVoiceRecognition() {
-    const recorderManager = wx.getRecorderManager();
-    
-    // 配置录音参数
-    const options = {
-      duration: 10000, // 最长录音时间，单位ms
-      sampleRate: 16000, // 采样率
-      numberOfChannels: 1, // 录音通道数
-      encodeBitRate: 64000, // 编码码率
-      format: 'mp3', // 音频格式
-      frameSize: 50 // 指定帧大小，单位KB
-    };
-    
-    // 监听录音结束事件
-    recorderManager.onStop((res) => {
-      console.log('录音结束:', res);
-      const { tempFilePath } = res;
-      
-      wx.showLoading({
-        title: '正在识别...',
-      });
-      
-      // 这里可以实现实际的语音识别逻辑
-      // 模拟识别过程
-      setTimeout(() => {
-        wx.hideLoading();
-        
-        // 模拟识别结果
-        const recognizedText = "南开大学的校训是什么";
-        
-        this.setData({
-          searchValue: recognizedText
-        });
-        
-        // 自动执行搜索
-        this.handleSearch();
-      }, 1500);
-    });
-    
-    // 开始录音
-    recorderManager.start(options);
-    
-    wx.showToast({
-      title: '正在录音...',
-      icon: 'none',
-      duration: 10000 // 与录音时长相同
-    });
-    
-    // 3秒后停止录音（实际应用中可以使用按钮控制停止）
-    setTimeout(() => {
-      recorderManager.stop();
-      wx.hideToast();
-    }, 3000);
+    // 取消现有请求
+    if (this.data.requestTask) {
+      this.data.requestTask.abort();
+    }
   }
-}) 
+}); 

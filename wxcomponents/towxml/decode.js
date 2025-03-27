@@ -19,6 +19,10 @@ Component({
     },
   },
   observers: {
+    openTyper: function(newVal) {
+      const { openTyper } = require("./typer");
+      openTyper.value = newVal;
+    },
     nodes: function (newVal) {
       if (newVal && newVal.id != undefined && this.data.hasInitCb == false) {
         this.data.hasInitCb = true;
@@ -27,7 +31,18 @@ Component({
     },
   },
   lifetimes: {
+    created: function() {
+      const { openTyper } = require("./typer");
+      openTyper.value = this.properties.openTyper;
+    },
+    attached: function() {
+      const { openTyper } = require("./typer");
+      openTyper.value = this.properties.openTyper;
+    },
     ready: function () {
+      const { openTyper } = require("./typer");
+      openTyper.value = this.properties.openTyper;
+      
       const _ts = this;
       config.events.forEach((item) => {
         _ts["_" + item] = function (...arg) {
@@ -49,17 +64,14 @@ Component({
     isShow: {},
     hasLastLeafNode: false,
     hasInitCb: false,
-    // openTyper: false
   },
   methods: {
     initCb() {
       const { openTyper } = require("./typer");
+      
       const newVal = this.data.nodes;
       if (newVal && newVal.id && openTyper.value) {
         const { typeShowCbMap } = require("./typer");
-        if (newVal.id.length <= 1) {
-          console.log("decode中newVal.id", newVal.id);
-        }
         if (newVal.children && newVal.children.length > 0) {
           let c = 0;
           for (let node of newVal.children) {
@@ -81,12 +93,10 @@ Component({
       }
     },
     show(resolve, index) {
-      // console.log("遍历decode》》》》》》")
       this.data.isShow[index] = true;
       this.setData({
         [`isShow[${index}]`]: true,
       });
-      // console.log("this.data.isShow的值",this.data.isShow)
       resolve();
     },
   },

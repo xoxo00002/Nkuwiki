@@ -40,7 +40,6 @@ Component({
       }
     },
     ready: function () {
-      // console.log("普通text中的ready")
       if (this.data.hasLastLeafNode) {
         this.startTraverse();
       }
@@ -55,7 +54,6 @@ Component({
   },
   methods: {
     show() {
-      // console.log("遍历text》》》》》》")
       this.data.isShow = true;
       this.setData({ isShow: this.data.isShow });
     },
@@ -67,14 +65,26 @@ Component({
         curLastLeafNodeId,
         openTyper,
       } = require("../typer");
+      
       if (newVal && openTyper.value) {
-        typeShowCbMap.value[newVal] = (resolve) => {
-          this.show();
-          this.startTyping(resolve);
-        };
-        if (newVal == curLastLeafNodeId.value) {
-          console.log("333333333333333333333");
-          this.data.hasLastLeafNode = true;
+        // 只有当文本非空时才注册打字回调
+        if (this.data.text && this.data.text.trim()) {
+          typeShowCbMap.value[newVal] = (resolve) => {
+            this.show();
+            this.startTyping(resolve);
+          };
+          
+          if (newVal == curLastLeafNodeId.value) {
+            this.data.hasLastLeafNode = true;
+          }
+        } else {
+          // 对于空文本节点，直接显示并立即完成
+          this.data.isShow = true;
+          this.setData({ isShow: this.data.isShow });
+          if (newVal == curLastLeafNodeId.value) {
+            this.data.hasLastLeafNode = true;
+            this.startTraverse();
+          }
         }
       }
     },
@@ -89,12 +99,7 @@ Component({
         isTyping,
         renderStartTime,
       } = require("../typer");
-      console.log("打字文本中匹配到最后一个，开始遍历");
-      console.log("开始遍历前typeShowCbMap的值", typeShowCbMap.value);
-      console.log(
-        "到开始遍历时，渲染了多久",
-        Date.now() - renderStartTime.value
-      );
+      
       setTimeout(
         () => {
           wx.hideLoading();
@@ -103,8 +108,9 @@ Component({
           //默认情况下时typable-text组件中的文本打印完了之后，自动触发滚动，但是有时候，组件内的文本很多，可能要打印几秒甚至更久，这个时候就添加这个定时器，即距离上一次滚动超过一定时间了也触发滚动
           scrollTimer.value = setInterval(() => {
             if (Date.now() - lastScrollTime.value > 600) {
-              console.log("定时器驱动滚动了一下");
-              scrollCb.value();
+              if (scrollCb.value) {
+                scrollCb.value();
+              }
             }
           }, 200);
         },0
@@ -112,6 +118,13 @@ Component({
     },
     startTyping(resolve) {
       this.clearTimer();
+      
+      // 如果文本为空，直接完成
+      if (!this.data.text || this.data.text.length === 0) {
+        if (resolve) resolve();
+        return;
+      }
+      
       let index = 0;
       this.setData({ currentText: "" });
       this.data.timer = setInterval(() => {
@@ -122,7 +135,7 @@ Component({
           index++;
         } else {
           this.clearTimer();
-          resolve();
+          if (resolve) resolve();
         }
       }, this.data.speed);
     },

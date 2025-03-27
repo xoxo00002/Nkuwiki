@@ -32,22 +32,26 @@ App({
 
   // 微信一键登录
   wxLogin: async function() {
-    return new Promise((resolve, reject) => {
-      wx.cloud.callFunction({
-        name: 'login',
-        success: res => {
-          if (res.result.code === 0) {
-            this.globalData.userInfo = res.result.data;
-            resolve(res.result);
-          } else {
-            reject(new Error(res.result.message || '登录失败'));
-          }
-        },
-        fail: err => {
-          console.error('登录失败：', err);
-          reject(err);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const userApi = require('./utils/api/user');
+        console.log('开始调用用户登录API');
+        
+        // 调用API模块中的login方法，不再使用云函数
+        const result = await userApi.login(this.globalData.userInfo || {});
+        
+        if (result.code === 0) {
+          this.globalData.userInfo = result.data;
+          console.log('登录成功，用户信息:', result.data);
+          resolve(result);
+        } else {
+          console.error('登录失败:', result.message);
+          reject(new Error(result.message || '登录失败'));
         }
-      });
+      } catch (err) {
+        console.error('登录过程发生异常:', err);
+        reject(err);
+      }
     });
   },
 
