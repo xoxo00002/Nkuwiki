@@ -1649,105 +1649,86 @@
 
 ## 七、Agent智能体API
 
-### 7.1 与Agent对话
+### 7.1 智能体聊天接口
 
 **接口**：`POST /api/agent/chat`  
-**描述**：与AI智能体进行对话，支持普通对话和流式返回  
+**描述**：与智能体进行对话，支持普通文本和流式响应  
 **请求体**：
 
 ```json
 {
-  "query": "南开大学的校训是什么？",
-  "messages": [
-    {"role": "user", "content": "你好"},
-    {"role": "assistant", "content": "你好！我是南开Wiki智能助手，有什么可以帮助你的吗？"}
-  ],
+  "query": "用户提问内容",
+  "openid": "用户唯一标识",
   "stream": false,
   "format": "markdown",
-  "openid": "user_openid"
+  "bot_tag": "default"
 }
 ```
 
-**参数说明**：
-- `query` - 必填，用户当前的问题
-- `messages` - 可选，对话历史消息列表，按时间顺序排列
-- `stream` - 可选，是否使用流式返回，默认为 false
-- `format` - 可选，返回格式，支持 "text"、"markdown" 或 "html"，默认为 "markdown"
-- `openid` - 可选，用户标识符
+**请求参数说明**：
+- `query` - 字符串，必填，用户的提问内容
+- `openid` - 字符串，必填，用户的唯一标识，用于区分不同用户
+- `stream` - 布尔值，可选，默认false，是否使用流式响应(服务器发送事件SSE)
+- `format` - 字符串，可选，默认"markdown"，响应格式，支持"markdown"、"text"、"html"
+- `bot_tag` - 字符串，可选，默认"default"，用于指定使用哪个机器人，配置在config中
 
-**普通响应**（`stream=false`）：
+**非流式响应**：
 
 ```json
 {
   "code": 200,
   "message": "success",
   "data": {
-    "response": "南开大学的校训是"允公允能，日新月异"。这八个字出自《论语》，体现了南开大学追求公能日新的办学理念。",
-    "sources": [
-      {
-        "type": "小程序帖子",
-        "title": "南开大学简介",
-        "content": "南开大学校训为"允公允能，日新月异"，出自《论语》...",
-        "author": "南开百科"
-      }
-    ],
-    "suggested_questions": [
-      "南开大学的校徽有什么含义？",
-      "南开大学是什么时候创立的？",
-      "南开大学的创始人是谁？"
-    ],
-    "format": "markdown"
+    "message": "AI回复的内容",
+    "sources": [],
+    "format": "markdown",
+    "usage": {},
+    "finish_reason": null
   },
   "details": null,
-  "timestamp": "2023-01-01 12:00:00"
+  "timestamp": "2025-03-27 16:47:42"
 }
 ```
 
-**流式响应**（`stream=true`）：
-
-当 `stream` 参数设置为 `true` 时，服务器将返回 `text/event-stream` 格式的数据流，客户端需要按照 Server-Sent Events (SSE) 的标准解析响应。每个事件以 `data: ` 开头，最后以 `data: [DONE]` 标记结束。
+**流式响应**：
+使用服务器发送事件(SSE)格式，每个事件包含部分回复内容，格式如下：
 
 ```
-data: 南开
-data: 大学
-data: 的
-data: 校训
-data: 是
-data: "
-data: 允公
-data: 允能
-data: ，
-data: 日新月异
-data: "
-data: 。
-data: 这
-data: 八个
-data: 字
-data: 出自
-data: 《
-data: 论语
-data: 》
-data: ，
-data: 体现
-data: 了
-data: 南开大学
-data: 追求
-data: 公能
-data: 日新
-data: 的
-data: 办学
-data: 理念
-data: 。
-data: [DONE]
+data: {"content": "内容片段1"}
+
+data: {"content": "内容片段2"}
+
+...
+
+data: {"content": "内容片段n"}
 ```
 
-客户端可以累积这些片段以重建完整响应，或实时显示打字效果。
+**响应参数说明**：
+- `message` - 字符串，AI回复的内容
+- `sources` - 数组，知识来源，目前为空数组
+- `format` - 字符串，输出格式
+- `usage` - 对象，token使用情况
+- `finish_reason` - 字符串或null，完成原因
 
-**注意**：
-1. 流式响应会考虑历史消息的上下文，但为了性能考虑，会以更高效的方式处理历史记录
-2. 流式响应不会返回知识源和推荐问题，这些信息只在非流式响应中提供
-3. 流式响应有 90 秒的超时设置，超时后会自动结束流
-4. 在出现错误时，流式响应会返回相应错误信息并结束流
+**错误码**：
+- `400` - 请求参数错误
+- `500` - 服务器内部错误
+
+**示例**：
+
+请求：
+```bash
+curl -X POST "http://localhost:8001/api/agent/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "南开大学有什么特色专业", "openid": "test_user", "stream": false, "format": "markdown", "bot_tag": "default"}'
+```
+
+流式请求：
+```bash
+curl -N -X POST "http://localhost:8001/api/agent/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "南开大学有什么特色专业", "openid": "test_user", "stream": true, "format": "markdown", "bot_tag": "default"}'
+```
 
 ### 7.2 知识库搜索
 
