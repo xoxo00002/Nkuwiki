@@ -96,7 +96,7 @@ Page({
           });
         } else {
           // 重新生成markdown
-          const markdownHtml = this.simpleMarkdownToHtml(this.data.fullResponse);
+          const markdownHtml = parseMarkdown(this.data.fullResponse);
           this.setData({
             markdownHtml: markdownHtml
           });
@@ -173,8 +173,6 @@ Page({
       });
       
       try {
-        console.log('创建towxml内容，打字机状态:', this.data.enableTyper);
-        
         // 一次性完整生成markdown内容
         const result = towxml(testContent, 'markdown', {
           theme: 'light',
@@ -189,8 +187,6 @@ Page({
         
         // 处理表格和代码块的noType属性
         this.handleNoTypeElements(result);
-        
-        console.log('设置richTextContent:', result);
         
         this.setData({
           richTextContent: result
@@ -222,9 +218,7 @@ Page({
             showCursor: true
           }
         });
-        
-        console.log('设置简单richTextContent:', result);
-        
+      
         this.setData({
           richTextContent: result
         });
@@ -473,9 +467,6 @@ Page({
       this.setData({
         richTextContent: result
       });
-      
-      // 检查控制台输出，确认数据结构
-      console.log('富文本内容:', result);
       
     } catch (error) {
       console.error('处理富文本失败:', error);
