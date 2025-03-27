@@ -29,6 +29,7 @@ Page({
     showCommentInput: false,
     commentText: '',
     commentImages: [],
+    isRead: true,
     showExpandedEditor: false,
     searchValue: '',
     searchHistory: [],
@@ -72,12 +73,40 @@ Page({
   },
   onLoad() {
     console.log('页面加载')
+    this.getIsRead();
     this.loadPosts()
     this.setData({
       currentPostId: '',  // 初始化为空字符串
       currentPostIndex: -1
     })
   },
+
+  async getIsRead(){
+
+    try{
+      const res = await wx.cloud.callFunction({
+        name: "getOpenID"
+      });
+
+      var userId = res.result.openid;
+
+      console.log("获取用户id", userId);
+    }catch(err){
+      console.log("获取用户id失败");
+    }
+
+    wx.cloud.database().collection("notification").doc(userId).get()
+        .then(async res => {
+          this.setData({
+            isRead: res.data.isRead
+          })
+          console.log(this.data.isRead);
+        })
+        .catch(err => {
+          console.log("获取isRead失败");
+        });
+  },
+
   onShow() {
     console.log('页面显示')
     
@@ -93,6 +122,8 @@ Page({
   // 下拉刷新
   onPullDownRefresh() {
     console.log('触发下拉刷新')
+
+    this.getIsRead();
 
     // 维持页面位置，只刷新数据
     this.loadPosts(true).then(() => {

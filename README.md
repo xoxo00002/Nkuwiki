@@ -8,7 +8,7 @@
 
 ## 项目结构说明
 
-```plain text
+```plain
 project
 │
 ├── pages/ # 页面文件夹
@@ -21,6 +21,7 @@ project
 │   ├── discover/ # 发现页
 │   ├── profile/ # 个人中心
 │   ├── login/ # 登录页
+│   ├── notification/ #通知页
 │   └── post/ # 发帖页
 │
 ├── utils/ # 工具函数
