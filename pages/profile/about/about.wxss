@@ -60,10 +60,9 @@
 }
 
 .copyright {
-  margin-top: 80rpx;
-  padding-top: 40rpx;
-  border-top: 1rpx solid #eee;
-  text-align: center;
+  position: relative;
+  margin-top: 60rpx;
+  padding: 40rpx 0;
 }
 
 .copyright text {
@@ -71,4 +70,184 @@
   font-size: 26rpx;
   color: #999;
   line-height: 2;
+}
+
+.about-container {
+  padding: 40rpx;
+  min-height: 100vh;
+  background-color: #f8f8f8;
+}
+
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 60rpx;
+}
+
+.logo {
+  width: 180rpx;
+  height: 180rpx;
+  margin-bottom: 20rpx;
+}
+
+.app-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.version {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.company-info {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 60rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.info-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eee;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+  display: block;
+}
+
+.content {
+  font-size: 32rpx;
+  color: #333;
+  display: block;
+}
+
+.company-intro {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 60rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.intro-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.intro-content {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.8;
+}
+
+/* 新增的富文本样式 */
+.intro-content .section-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin: 40rpx 0 20rpx;
+  padding-bottom: 10rpx;
+  border-bottom: 2rpx solid #eee;
+}
+
+.intro-content .subtitle {
+  font-size: 26rpx;
+  color: #999;
+  margin-top: -10rpx;
+  margin-bottom: 20rpx;
+}
+
+.intro-content h3 {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #444;
+  margin: 30rpx 0 15rpx;
+}
+
+.intro-content .platform-item,
+.intro-content .contribution-item {
+  margin-bottom: 30rpx;
+  padding-left: 20rpx;
+}
+
+.intro-content ul {
+  list-style-type: disc;
+  padding-left: 40rpx;
+  margin: 10rpx 0;
+}
+
+.intro-content li {
+  margin: 10rpx 0;
+}
+
+.intro-content p {
+  margin: 10rpx 0;
+  line-height: 1.6;
+}
+
+.intro-content .highlight {
+  color: #ff4d4f;
+  font-weight: bold;
+}
+
+.section {
+  margin-bottom: 40rpx;
+}
+
+.section-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin: 40rpx 0 20rpx;
+  padding-bottom: 10rpx;
+  border-bottom: 2rpx solid #eee;
+}
+
+.section-subtitle {
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.platform-item,
+.contribution-item {
+  margin-bottom: 30rpx;
+  padding-left: 20rpx;
+}
+
+.item-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #444;
+  margin-bottom: 15rpx;
+}
+
+.item-content {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+.list-item {
+  margin: 10rpx 0;
+  padding-left: 10rpx;
+}
+
+.highlight {
+  color: #ff4d4f;
+  font-weight: bold;
 } 

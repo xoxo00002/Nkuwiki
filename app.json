@@ -10,7 +10,9 @@
     "pages/post/detail/detail",
     "pages/profile/myPosts/myPosts",
     "pages/profile/feedback/feedback",
-    "pages/profile/about/about"
+    "pages/profile/about/about",
+    "pages/profile/mylike_fav_comment/mylike_fav_comment",
+    "pages/notification/notification"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -54,11 +56,11 @@
         "iconPath": "assets/icons/profile.png",
         "selectedIconPath": "assets/icons/profile-active.png"
       }
-    ],
-    "iconWidth": "16px",
-    "iconHeight": "16px"
+    ]
   },
-  "usingComponents": {},
+  "usingComponents": {
+    "towxml": "wxcomponents/towxml/towxml"
+  },
   "requiredPrivateInfos": [
     "chooseLocation",
     "getLocation"

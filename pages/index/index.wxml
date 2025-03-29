@@ -4,7 +4,12 @@
   <!-- 顶部导航栏 -->
   <view class="header">
     <image class="logo" src="/assets/icons/index/logo.png" />
-    <image class="icon" src="/assets/icons/index/notification.png" />
+    <block wx:if = "{{isRead}}">
+    <image class="icon" src="/assets/icons/index/notification.png" bindtap="goToNotification"/>
+    </block>
+    <block wx:else>
+    <image class="icon" src="/assets/icons/index/notification-unread.png" bindtap="goToNotification"/>
+    </block>
     <image class="icon" src="/assets/icons/index/message.png" />
   </view>
 
@@ -45,20 +50,26 @@
       <view class="post-item" wx:for="{{posts}}" wx:key="_id">
         <!-- 用户信息部分 -->
         <view class="post-header">
-          <image class="author-avatar" src="{{item.authorAvatar}}" mode="aspectFill" binderror="onAvatarError" data-index="{{index}}"/>
+          <image 
+            class="author-avatar" 
+            src="{{item.avatar || '/assets/icons/default-avatar.png'}}" 
+            mode="aspectFill" 
+            binderror="onAvatarError" 
+            data-index="{{index}}"
+          />
           <view class="post-info">
-            <text class="author-name">{{item.authorName || '匿名用户'}}</text>
-            <text class="post-time">{{item.relativeTime || '刚刚'}}</text>
+            <text class="author-name">{{item.nick_name || '匿名用户'}}</text>
+            <text class="post-time">{{item.create_time_formatted || '刚刚'}}</text>
           </view>
         </view>
 
         <!-- 内容部分 -->
-        <view class="post-content-wrapper" bindtap="goToDetail" data-post-id="{{item._id}}">
+        <view class="post-content-wrapper" bindtap="goToDetail" data-post-id="{{item.id}}">
           <!-- 标题部分 -->
           <text class="post-title" wx:if="{{item.title}}">{{item.title}}</text>
 
           <!-- 内容部分 -->
-          <text class="post-content" user-select="{{true}}">{{item.displayContent}}</text>
+          <text class="post-content" user-select="{{true}}">{{item.content}}</text>
 
           <!-- 查看全文按钮 -->
           <view wx:if="{{item.hasMore}}" class="read-more">
@@ -73,12 +84,22 @@
                 class="post-image-item"
                 wx:for="{{item.images}}"
                 wx:for-item="image"
+                wx:for-index="imageIndex"
                 wx:key="*this"
-                wx:if="{{index < 3}}"
+                wx:if="{{imageIndex < 3}}"
+                catchtap="previewImage" 
+                data-urls="{{item.images}}" 
+                data-current="{{image}}"
               >
-                <image src="{{image}}" mode="aspectFill" />
+                <image 
+                  src="{{image}}" 
+                  mode="aspectFill" 
+                  binderror="onPostImageError" 
+                  data-post-index="{{index}}" 
+                  data-image-index="{{imageIndex}}"
+                />
                 <!-- 如果超过3张，在第3张上显示剩余数量 -->
-                <view class="image-count" wx:if="{{index === 2 && item.images.length > 3}}">+{{item.images.length - 3}}</view>
+                <view class="image-count" wx:if="{{imageIndex === 2 && item.images.length > 3}}">+{{item.images.length - 3}}</view>
               </view>
             </view>
           </view>
@@ -93,28 +114,52 @@
         <view class="divider"></view>
 
         <!-- 评论预览部分 - 修改显示数量并添加图片处理 -->
-        <view class="comment-preview" wx:if="{{item.comments && item.comments.length > 0}}">
+        <view class="comment-preview" wx:if="{{item.recent_comments && item.recent_comments.length > 0}}">
           <!-- 修改评论数量限制为3条 -->
-          <view class="comment-preview-item" wx:for="{{item.comments}}" wx:for-item="comment" wx:key="_id" wx:if="{{index < 3}}">
-            <text class="comment-author">{{comment.authorName}}:</text>
+          <view class="comment-preview-item" wx:for="{{item.recent_comments}}" wx:for-item="comment" wx:for-index="commentIndex" wx:key="id" wx:if="{{commentIndex < 3}}">
+            <text class="comment-author">{{comment.nick_name}}:</text>
 
             <!-- 判断评论内容类型 -->
-            <text class="comment-content" wx:if="{{!comment.images || comment.images.length === 0}}">{{comment.content}}</text>
+            <text class="comment-content" user-select="{{true}}" wx:if="{{!comment.images || comment.images.length === 0}}">{{comment.content}}</text>
 
             <!-- 处理有图片的评论 -->
             <block wx:elif="{{comment.images && comment.images.length > 0}}">
-              <text class="comment-content">
+              <text class="comment-content" user-select="{{true}}">
                 <!-- 如果既有文字内容又有图片 -->
                 <block wx:if="{{comment.content}}">{{comment.content}}</block>
-                <!-- 添加图片标识 -->
-                <block wx:if="{{comment.images.length > 0}}">[图片]</block>
               </text>
+              
+              <!-- 评论图片展示 -->
+              <view class="comment-images-preview">
+                <view 
+                  class="comment-image-item" 
+                  wx:for="{{comment.images}}" 
+                  wx:for-item="image" 
+                  wx:for-index="imageIndex" 
+                  wx:key="*this"
+                  wx:if="{{imageIndex < 2}}"
+                  catchtap="previewImage" 
+                  data-urls="{{comment.images}}" 
+                  data-current="{{image}}"
+                >
+                  <image 
+                    src="{{image}}" 
+                    mode="aspectFill" 
+                    binderror="onCommentImageError" 
+                    data-post-index="{{index}}"
+                    data-comment-index="{{commentIndex}}"
+                    data-image-index="{{imageIndex}}"
+                  />
+                  <!-- 如果超过2张，在第2张上显示剩余数量 -->
+                  <view class="image-count" wx:if="{{imageIndex === 1 && comment.images.length > 2}}">+{{comment.images.length - 2}}</view>
+                </view>
+              </view>
             </block>
           </view>
 
           <!-- 查看全部评论链接 -->
-          <view class="view-more-comments" wx:if="{{item.comments.length > 3}}" bindtap="viewPostDetail" data-id="{{item._id}}">
-            查看全部 {{item.comments.length}} 条评论
+          <view class="view-more-comments" wx:if="{{item.comment_count > 3}}" bindtap="viewPostDetail" data-id="{{item.id}}">
+            查看全部 {{item.comment_count}} 条评论
           </view>
         </view>
 
@@ -123,7 +168,7 @@
           <view
             class="action-item {{item.isLiked ? 'liked' : ''}}"
             catch:tap="handleLike"
-            data-id="{{item._id}}"
+            data-id="{{item.id}}"
             data-index="{{index}}"
           >
             <image
@@ -131,19 +176,19 @@
               src="{{item.isLiked ? '/assets/icons/index/liked.png' : '/assets/icons/index/like.png'}}"
               mode="aspectFit"
             ></image>
-            <text class="{{item.isLiked ? 'liked-text' : ''}}">{{item.likes || 0}}</text>
+            <text class="{{item.isLiked ? 'liked-text' : ''}}">{{item.like_count || 0}}</text>
           </view>
 
-          <view class="action-item" bindtap="showCommentInput" data-id="{{item._id}}" data-index="{{index}}">
+          <view class="action-item" bindtap="showCommentInput" data-id="{{item.id}}" data-index="{{index}}">
             <image class="action-icon" src="/assets/icons/index/comment.png" mode="aspectFit"></image>
-            <text>{{item.commentCount || 0}}</text>
+            <text>{{item.comment_count || 0}}</text>
           </view>
 
           <!-- 收藏按钮，放在评论按钮的右侧 -->
           <view
             class="action-item {{item.isFavorited ? 'favorited' : ''}}"
             catch:tap="handleFavorite"
-            data-id="{{item._id}}"
+            data-id="{{item.id}}"
             data-index="{{index}}"
           >
             <image
@@ -151,7 +196,7 @@
               src="{{item.isFavorited ? '/assets/icons/index/favorited.png' : '/assets/icons/index/favorite.png'}}"
               mode="aspectFit"
             ></image>
-            <text class="{{item.isFavorited ? 'favorited-text' : '' }}">{{item.favoriteCounts || 0}}</text>
+            <text class="{{item.isFavorited ? 'favorited-text' : '' }}">{{item.favorite_count || 0}}</text>
           </view>
         </view>
       </view>

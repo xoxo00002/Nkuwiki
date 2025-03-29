@@ -31,7 +31,7 @@
       <view class="info-content">
         <text class="nickname">{{userInfo.nickName}}</text>
         <text class="university">{{userInfo.university}}</text>
-        <text class="status">{{userInfo.status}}</text>
+        <text class="status">{{userInfo.bio}}</text>
       </view>
       <view class="edit-btn" bindtap="goToEdit">编辑资料</view>
     </view>
